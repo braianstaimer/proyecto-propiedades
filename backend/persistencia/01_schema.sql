@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS propiedades (
   INDEX idx_fecha_publicacion       (fecha_publicacion),
   INDEX idx_habitaciones_banos      (habitaciones, banos),
   INDEX idx_tipo_precio             (tipo, precio),
+  FULLTEXT INDEX ft_search          (titulo, descripcion, ubicacion),
   CONSTRAINT chk_precio_positivo    CHECK (precio >= 0),
   CONSTRAINT chk_habitaciones_pos   CHECK (habitaciones IS NULL OR habitaciones >= 0),
   CONSTRAINT chk_banos_pos          CHECK (banos IS NULL OR banos >= 0),

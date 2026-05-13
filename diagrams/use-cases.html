@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>proyecto-propiedades · Casos de uso</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+           background: #f8fafc; color: #0f172a; margin: 0; padding: 32px; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    h1 { font-size: 28px; letter-spacing: -0.02em; margin-bottom: 4px; }
+    .crumb { color: #64748b; font-size: 14px; margin-bottom: 24px; }
+    .crumb a { color: #2563eb; text-decoration: none; }
+    .card { background: white; border-radius: 12px; padding: 32px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); margin-bottom: 16px; }
+    h2 { margin-top: 32px; margin-bottom: 12px; font-size: 18px; }
+    h2:first-child { margin-top: 0; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14px; }
+    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #e2e8f0; }
+    th { background: #f1f5f9; font-weight: 600; }
+    code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+    .diagram { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="crumb"><a href="index.html">← Diagramas</a> · Diagrama 1 de 5</div>
+    <h1>Casos de uso</h1>
+
+    <div class="card">
+      <h2>UML · Actor y casos del sistema</h2>
+
+      <svg class="diagram" viewBox="0 0 900 460" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Use case diagram">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+          </marker>
+          <marker id="arrowDashed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8"/>
+          </marker>
+        </defs>
+
+        <!-- Actor (stick figure) -->
+        <g transform="translate(70, 200)">
+          <circle cx="0" cy="-40" r="14" fill="none" stroke="#0f172a" stroke-width="2"/>
+          <line x1="0" y1="-26" x2="0" y2="20" stroke="#0f172a" stroke-width="2"/>
+          <line x1="-22" y1="0" x2="22" y2="0" stroke="#0f172a" stroke-width="2"/>
+          <line x1="0" y1="20" x2="-18" y2="46" stroke="#0f172a" stroke-width="2"/>
+          <line x1="0" y1="20" x2="18" y2="46" stroke="#0f172a" stroke-width="2"/>
+          <text x="0" y="72" text-anchor="middle" font-size="14" font-weight="600" fill="#0f172a">Usuario</text>
+        </g>
+
+        <!-- System boundary -->
+        <rect x="240" y="30" width="620" height="400" rx="14" ry="14"
+              fill="none" stroke="#94a3b8" stroke-width="2" stroke-dasharray="6 4"/>
+        <text x="260" y="56" font-size="14" font-weight="600" fill="#475569">proyecto-propiedades</text>
+
+        <!-- Use cases (ellipses) -->
+        <g font-family="-apple-system, sans-serif" font-size="13">
+          <ellipse cx="540" cy="100" rx="160" ry="32" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+          <text x="540" y="96" text-anchor="middle" fill="#0f172a" font-weight="600">UC-01</text>
+          <text x="540" y="112" text-anchor="middle" fill="#475569">Buscar propiedades en NL</text>
+
+          <ellipse cx="540" cy="180" rx="160" ry="32" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+          <text x="540" y="176" text-anchor="middle" fill="#0f172a" font-weight="600">UC-02</text>
+          <text x="540" y="192" text-anchor="middle" fill="#475569">Ver SQL generado (educativo)</text>
+
+          <ellipse cx="540" cy="260" rx="160" ry="32" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+          <text x="540" y="256" text-anchor="middle" fill="#0f172a" font-weight="600">UC-03</text>
+          <text x="540" y="272" text-anchor="middle" fill="#475569">Visualizar listado de resultados</text>
+
+          <ellipse cx="540" cy="340" rx="160" ry="32" fill="#fef2f2" stroke="#dc2626" stroke-width="1.5"/>
+          <text x="540" y="336" text-anchor="middle" fill="#0f172a" font-weight="600">UC-04</text>
+          <text x="540" y="352" text-anchor="middle" fill="#475569">Manejar loading/error/empty</text>
+
+          <ellipse cx="540" cy="400" rx="160" ry="22" fill="#f1f5f9" stroke="#64748b" stroke-width="1.5"/>
+          <text x="540" y="404" text-anchor="middle" fill="#475569" font-weight="600">UC-05 · Health check</text>
+        </g>
+
+        <!-- Lines actor → use cases (solid) -->
+        <g stroke="#475569" stroke-width="1.5" fill="none">
+          <line x1="100" y1="195" x2="380" y2="100"/>
+          <line x1="100" y1="200" x2="380" y2="180"/>
+          <line x1="100" y1="205" x2="380" y2="260"/>
+          <line x1="100" y1="210" x2="380" y2="340"/>
+          <line x1="100" y1="215" x2="380" y2="400"/>
+        </g>
+
+        <!-- Includes/Extends relationships -->
+        <g stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="4 3" fill="none" marker-end="url(#arrowDashed)">
+          <line x1="540" y1="132" x2="540" y2="148"/>
+          <line x1="540" y1="212" x2="540" y2="228"/>
+          <line x1="540" y1="292" x2="540" y2="308"/>
+        </g>
+        <g font-family="-apple-system, sans-serif" font-size="11" fill="#64748b">
+          <text x="552" y="142">«extends»</text>
+          <text x="552" y="222">«includes»</text>
+          <text x="552" y="302">«extends»</text>
+        </g>
+      </svg>
+
+      <h2>Detalle de casos</h2>
+      <table>
+        <thead>
+          <tr><th>ID</th><th>Nombre</th><th>Trigger</th><th>Postcondición</th><th>Errores manejados</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>UC-01</code></td>
+            <td>Buscar propiedades en lenguaje natural</td>
+            <td>Usuario escribe consulta y presiona "Buscar" o Enter</td>
+            <td>Sistema devuelve 0..N propiedades en JSON</td>
+            <td>EMPTY_QUERY · LLM_TIMEOUT · LLM_INVALID_OUTPUT · SQL_NOT_SELECT · SQL_FORBIDDEN_TABLE · SQL_DANGEROUS_FUNCTION</td>
+          </tr>
+          <tr>
+            <td><code>UC-02</code></td>
+            <td>Ver SQL generado</td>
+            <td>Usuario activa toggle "Mostrar SQL"</td>
+            <td>UI muestra el SQL validado en bloque mono</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td><code>UC-03</code></td>
+            <td>Visualizar listado de resultados</td>
+            <td>Resultado de UC-01</td>
+            <td>Grid responsive de PropertyCard con tipo, precio, ubicación, m², habs/baños</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td><code>UC-04</code></td>
+            <td>Ver estado vacío/error/cargando</td>
+            <td>UC-01 en cualquier estado no-éxito</td>
+            <td>UI muestra Spinner / EmptyState / ErrorAlert según corresponda</td>
+            <td>Todos los del catálogo</td>
+          </tr>
+          <tr>
+            <td><code>UC-05</code></td>
+            <td>Health check</td>
+            <td><code>GET /api/health</code></td>
+            <td>JSON con estado de DB y Ollama</td>
+            <td>DB_ERROR · LLM_UNAVAILABLE</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Actores</h2>
+      <p>Único actor: <strong>Usuario final</strong> (agente inmobiliario o comprador).
+      Sin auth, sin roles. El catálogo de errores está modelado como objetivos de UC-04.</p>
+
+      <h2>Fuera de alcance</h2>
+      <ul style="margin-top: 8px; padding-left: 20px; line-height: 1.8;">
+        <li>Crear / editar / borrar propiedades</li>
+        <li>Login, registro, perfiles</li>
+        <li>Pagos, mensajería, agendar visitas</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>

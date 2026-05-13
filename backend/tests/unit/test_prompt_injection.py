@@ -7,6 +7,7 @@ hardening hecho contra inputs adversariales.
 
 from __future__ import annotations
 
+import contextlib
 from collections.abc import Sequence
 from datetime import date
 from typing import cast
@@ -142,10 +143,9 @@ async def test_sanitize_neutralizes_homoglyph_override() -> None:
     # validación SQL final detiene el daño. La regla queda documentada:
     # NFKC bloquea formas compatibles (full-width, ligatures), no homoglyphs
     # cross-script. Para esos hay layers posteriores (validator).
-    try:
+    # EmptyQueryError aquí significa bloqueo temprano (ideal).
+    with contextlib.suppress(EmptyQueryError):
         await service.search(payload)
-    except EmptyQueryError:
-        pass  # bloqueo temprano, ideal
     # En cualquier caso, si la consulta pasa, el LLM recibe la versión
     # sanitizada (sin nuevas líneas, sin marcadores), no el prompt original.
     for call in llm.calls:

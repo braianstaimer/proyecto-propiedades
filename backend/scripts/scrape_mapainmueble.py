@@ -613,9 +613,7 @@ class IngestPipeline:
     def _should_ingest(self, slug: SlugInfo | None) -> bool:
         if slug is None:
             return False
-        if self._config.only_venta and slug.operation != "venta":
-            return False
-        return True
+        return not (self._config.only_venta and slug.operation != "venta")
 
     async def _drain_if_full(
         self,

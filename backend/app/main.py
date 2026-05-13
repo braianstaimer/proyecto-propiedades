@@ -11,19 +11,20 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_redoc_html
 from fastapi.responses import HTMLResponse, JSONResponse
 
-REDOC_JS_URL = "https://cdn.jsdelivr.net/npm/redoc@2.5.0/bundles/redoc.standalone.js"
-
 from app import __version__
 from app.config import get_settings
 from app.database import build_datasource
 from app.exceptions import DomainError
 from app.llm_service import build_llm_provider
+from app.query_cache import QueryCache
 from app.repositories import build_property_repository
 from app.routes import router as api_router
 from app.schemas import ErrorDetail, ErrorResponse
 from app.search_service import SearchService
 from app.sql_validator import SQLValidator
 from persistencia.runner import run_migrations_if_needed
+
+REDOC_JS_URL = "https://cdn.jsdelivr.net/npm/redoc@2.5.0/bundles/redoc.standalone.js"
 
 logger = logging.getLogger("proyecto-propiedades")
 
@@ -41,11 +42,13 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         max_limit=settings.MAX_SQL_LIMIT,
         default_limit=settings.DEFAULT_SQL_LIMIT,
     )
+    app.state.query_cache = QueryCache(max_size=settings.QUERY_CACHE_SIZE)
     app.state.search_service = SearchService(
         llm=app.state.llm,
         validator=app.state.validator,
         repo=app.state.repo,
         settings=settings,
+        cache=app.state.query_cache,
     )
     try:
         await run_migrations_if_needed(app.state.datasource, min_seed_rows=settings.MIN_SEED_ROWS)

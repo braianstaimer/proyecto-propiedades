@@ -142,6 +142,86 @@ describe('SearchView', () => {
     expect(wrapper.text()).not.toContain('SQL generado')
   })
 
+  it('runs a search when a suggestion chip is picked', async () => {
+    mockedSearch.mockResolvedValue({
+      query: 'Casas de 3 habitaciones en zona 10',
+      sql: 'SELECT id FROM propiedades LIMIT 1',
+      count: 1,
+      results: [
+        {
+          id: 1,
+          titulo: 'Casa Suggested',
+          descripcion: null,
+          tipo: 'casa',
+          precio: 100000,
+          habitaciones: 3,
+          banos: 2,
+          area_m2: 150,
+          ubicacion: 'Zona 10',
+          fecha_publicacion: '2026-04-21',
+        },
+      ],
+      took_ms: 80,
+    })
+    const wrapper = mountView()
+    const suggestionButton = wrapper
+      .findAll('button')
+      .find((b) => b.text().includes('Casas de 3 habitaciones en zona 10'))
+    expect(suggestionButton).toBeDefined()
+    await suggestionButton!.trigger('click')
+    await flushPromises()
+
+    expect(mockedSearch).toHaveBeenCalledTimes(1)
+    expect(mockedSearch).toHaveBeenCalledWith({
+      query: 'Casas de 3 habitaciones en zona 10',
+    })
+    const input = wrapper.find('input[type="search"]')
+      .element as HTMLInputElement
+    expect(input.value).toBe('Casas de 3 habitaciones en zona 10')
+    expect(wrapper.text()).toContain('1 resultado')
+    expect(wrapper.text()).toContain('Casa Suggested')
+  })
+
+  it('clears results and input when ResultBar emits reset', async () => {
+    mockedSearch.mockResolvedValue({
+      query: 'x',
+      sql: 'SELECT id FROM propiedades LIMIT 1',
+      count: 1,
+      results: [
+        {
+          id: 1,
+          titulo: 'Casa A',
+          descripcion: null,
+          tipo: 'casa',
+          precio: 100000,
+          habitaciones: 3,
+          banos: 2,
+          area_m2: 150,
+          ubicacion: 'Zona 10',
+          fecha_publicacion: '2026-04-21',
+        },
+      ],
+      took_ms: 100,
+    })
+    const wrapper = mountView()
+    await wrapper.find('input[type="search"]').setValue('Busco casas')
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+    expect(wrapper.text()).toContain('Casa A')
+
+    const resetButton = wrapper
+      .findAll('button')
+      .find((b) => b.text() === 'Nueva búsqueda')
+    expect(resetButton).toBeDefined()
+    await resetButton!.trigger('click')
+    await flushPromises()
+
+    expect(wrapper.text()).not.toContain('Casa A')
+    const input = wrapper.find('input[type="search"]')
+      .element as HTMLInputElement
+    expect(input.value).toBe('')
+  })
+
   it('dismisses error when clicking close button', async () => {
     mockedSearch.mockRejectedValue(new ApiError('LLM_TIMEOUT', 'msg', 422))
     const wrapper = mountView()

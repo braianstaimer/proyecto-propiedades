@@ -5,8 +5,8 @@ defineProps<{ sql: string; tookMs?: number | null }>()
 <template>
   <section class="card p-5 bg-neutral-900 border-neutral-800" aria-label="SQL generado">
     <div class="flex items-center justify-between mb-3">
-      <h3 class="text-caption text-neutral-400 font-mono uppercase tracking-wider">SQL generado</h3>
-      <span v-if="tookMs != null" class="text-caption text-neutral-500 font-mono">
+      <h3 class="text-caption text-neutral-400 font-mono uppercase tracking-wider whitespace-nowrap">SQL generado</h3>
+      <span v-if="tookMs != null" class="text-caption text-neutral-500 font-mono whitespace-nowrap">
         {{ tookMs }} ms
       </span>
     </div>

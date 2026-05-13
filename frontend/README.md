@@ -7,7 +7,7 @@ UI para `POST /api/search`: input en lenguaje natural, grid de resultados con ca
 [![Vue](https://img.shields.io/badge/Vue-3.5-42b883.svg)](https://vuejs.org)
 [![TypeScript](https://img.shields.io/badge/TS-5.7-3178c6.svg)](https://www.typescriptlang.org)
 [![Vite](https://img.shields.io/badge/Vite-5.4-646cff.svg)](https://vitejs.dev)
-[![Coverage](https://img.shields.io/badge/coverage-91%25-brightgreen.svg)]()
+[![Coverage](https://img.shields.io/badge/coverage-94%25-brightgreen.svg)]()
 
 ---
 
@@ -38,10 +38,11 @@ npm run dev                        # http://localhost:5173
 | Comando | Descripción |
 |---|---|
 | `npm run dev` | Vite dev server con HMR en `:5173` |
-| `npm run build` | Producción → `dist/` (151kB / 58.8kB gzip) |
+| `npm run build` | Producción → `dist/` (~157kB / ~61kB gzip) |
 | `npm run preview` | Sirve `dist/` localmente en `:4173` |
 | `npm run test` | vitest watch |
 | `npm run test:ci` | vitest run + cobertura |
+| `npm run test:smoke` | Sólo golden path (`tests/smoke/`) |
 | `npm run typecheck` | `vue-tsc --noEmit` |
 | `npm run gen:types` | Regenera `src/types/api.ts` desde el OpenAPI |
 
@@ -64,14 +65,17 @@ src/
 ├── router/index.ts          # 1 ruta: / → SearchView
 ├── views/SearchView.vue     # Vista única
 ├── components/              # Atomic Design
+│   ├── AppHeader.vue
 │   ├── SearchBar.vue
+│   ├── SuggestionChips.vue   # Chips de sugerencias bajo el SearchBar
+│   ├── Eyebrow.vue           # Pill superior del hero
+│   ├── ResultBar.vue         # Chip + counter + reset (header de resultados)
 │   ├── PropertyCard.vue
 │   ├── PropertyGrid.vue
 │   ├── EmptyState.vue
 │   ├── ErrorAlert.vue
 │   ├── LoadingSpinner.vue
-│   ├── SqlPreview.vue
-│   └── AppHeader.vue
+│   └── SqlPreview.vue
 ├── composables/useSearch.ts # Wrapper del store
 ├── stores/search.ts         # Pinia store
 ├── services/api.ts          # axios client con ApiError envelope
@@ -109,12 +113,16 @@ npm run test:ci
 
 | Archivo | Tests |
 |---|---|
+| `tests/unit/SearchView.spec.ts` | 9 |
 | `tests/unit/useSearch.spec.ts` | 7 |
-| `tests/unit/SearchView.spec.ts` | 7 |
 | `tests/unit/api.spec.ts` | 6 |
-| **Total** | **20** |
+| `tests/unit/ResultBar.spec.ts` | 4 |
+| `tests/unit/Eyebrow.spec.ts` | 3 |
+| `tests/unit/SuggestionChips.spec.ts` | 3 |
+| `tests/smoke/smoke.spec.ts` | 6 |
+| **Total** | **38** |
 
-Cobertura: **91.6% global**.
+Cobertura: **94% global** (`v8`).
 
 ---
 

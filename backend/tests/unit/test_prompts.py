@@ -4,7 +4,7 @@ from app.prompts import COLUMN_LIST, PROMPT_VERSION, PromptBuilder, _defang_user
 
 
 def test_prompt_version_constant() -> None:
-    assert PROMPT_VERSION == "v2"
+    assert PROMPT_VERSION == "v3"
 
 
 def test_builder_inserts_user_query() -> None:
@@ -58,7 +58,7 @@ def test_retry_prompt_contains_error_reason() -> None:
 
 
 def test_builder_version_property() -> None:
-    assert PromptBuilder().version == "v2"
+    assert PromptBuilder().version == "v3"
 
 
 # ---------------------------------------------------------------------------

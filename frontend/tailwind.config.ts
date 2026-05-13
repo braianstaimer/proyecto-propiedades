@@ -63,6 +63,9 @@ const config: Config = {
         card: '0 1px 3px 0 rgb(15 58 110 / 0.08), 0 1px 2px -1px rgb(15 58 110 / 0.06)',
         'card-hover': '0 10px 25px -5px rgb(15 58 110 / 0.12), 0 8px 10px -6px rgb(15 58 110 / 0.08)',
       },
+      opacity: {
+        92: '0.92',
+      },
     },
   },
   plugins: [],

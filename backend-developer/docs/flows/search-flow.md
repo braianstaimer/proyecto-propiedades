@@ -11,6 +11,7 @@ sequenceDiagram
     participant U as Usuario
     participant FE as Vue Frontend
     participant API as FastAPI
+    participant C as QueryCache (LRU)
     participant V as SQLValidator
     participant L as LLMProvider (Ollama)
     participant DB as MySQL
@@ -18,16 +19,22 @@ sequenceDiagram
     U->>FE: Escribe "Busco casas..."
     FE->>API: POST /api/search { query }
     API->>API: sanitize(query)
-    API->>L: generate_sql(prompt + query)
-    L-->>API: raw SQL
-    API->>V: validate(raw SQL)
-    alt SQL inválido
-        V-->>API: raises SQLValidator error
-        API->>L: retry once with corrective prompt
-        L-->>API: retry SQL
-        API->>V: validate again
+    API->>C: get(sanitized_query)
+    alt cache hit
+        C-->>API: ValidatedSQL (cached)
+    else cache miss
+        API->>L: generate_sql(prompt + query)
+        L-->>API: raw SQL
+        API->>V: validate(raw SQL)
+        alt SQL inválido
+            V-->>API: raises SQLValidator error
+            API->>L: retry once with corrective prompt
+            L-->>API: retry SQL
+            API->>V: validate again
+        end
+        V-->>API: ValidatedSQL
+        API->>C: put(sanitized_query, ValidatedSQL)
     end
-    V-->>API: ValidatedSQL
     API->>DB: SELECT ... FROM propiedades ...
     DB-->>API: rows
     API-->>FE: 200 { sql, count, results, took_ms }
@@ -68,3 +75,19 @@ Si la validación falla, se reintenta UNA vez con prompt que incluye el motivo d
 
 ### 6. Respuesta
 `SearchResponse { query, sql, count, results, took_ms }` con `X-Request-ID` header.
+
+---
+
+## ⚡ Cache LRU de consultas
+
+Antes de llamar al LLM, el `SearchService` chequea un cache **in-process LRU** con key = `sanitized_query` y value = `ValidatedSQL`. En un hit, salta los pasos 2-4 (≈1 s p50) y va directo al paso 5 — la DB **siempre se consulta**, los datos nunca son stale.
+
+| Comportamiento | Detalle |
+|---|---|
+| Tamaño | `QUERY_CACHE_SIZE` (default `256`; `0` desactiva) |
+| Política | LRU con promoción en cada hit |
+| Vida útil | Hasta restart del container |
+| Sólo éxitos | Si el pipeline falla tras el retry, **no se cachea** |
+| Métricas | `service.cache.stats.{hits, misses, evictions}` |
+
+**Por qué cachear sólo el SQL y no la respuesta completa:** el cuello de botella es Ollama (~1 s caliente vs ~5 ms del SELECT). Cachear `ValidatedSQL` da el 99% del speedup sin servir filas stale — relevante porque el scraper puede insertar entre dos requests idénticas.

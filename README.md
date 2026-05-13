@@ -2,7 +2,27 @@
 
 > **Búsqueda de propiedades inmobiliarias en lenguaje natural** — Vue 3 + FastAPI + MySQL + Ollama
 
-Solución al assessment Full Stack. App web que recibe consultas en español natural (ej. *"Busco casas de 3 habitaciones en zona 10"*), las traduce a SQL via LLM local, valida con triple defensa anti-injection (sanitización + `sqlglot` AST + whitelist) y devuelve resultados JSON al frontend Vue.
+Solución al assessment Full Stack. App web que recibe consultas en español (ej. *"Busco casas de 3 habitaciones en zona 10"*), las traduce a SQL vía LLM local, las valida con triple defensa anti‑injection (sanitización + `sqlglot` AST + whitelist) y devuelve resultados JSON al frontend Vue.
+
+---
+
+## 🔗 Entregables (abre tras `docker compose up -d --build`)
+
+| Entregable | URL |
+|---|---|
+| **UI Vue** (app principal) | <http://localhost:8080> |
+| **Developer site** (Docusaurus + Scalar, bonus) | <http://localhost:3001> |
+| **Swagger UI** (API interactiva) | <http://localhost:8000/docs> |
+| **ReDoc** (API legible) | <http://localhost:8000/redoc> |
+
+```bash
+open http://localhost:8080        # UI Vue
+open http://localhost:3001        # Developer site
+open http://localhost:8000/docs   # Swagger UI
+open http://localhost:8000/redoc  # ReDoc
+```
+
+**Repositorio:** <https://github.com/braianstaimer/proyecto-propiedades>
 
 [![Python](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org)
 [![Vue](https://img.shields.io/badge/Vue-3.5-42b883.svg)](https://vuejs.org)
@@ -11,43 +31,43 @@ Solución al assessment Full Stack. App web que recibe consultas en español nat
 [![Coverage](https://img.shields.io/badge/coverage-95%25-brightgreen.svg)]()
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)]()
 
-**Repo:** https://github.com/braianstaimer/proyecto-propiedades
-
 ---
 
 ## 🚀 Quickstart
 
-### Pre-requisitos
+### 1. Pre-requisitos
 
 - Docker + Docker Compose v2
-- Ollama corriendo en el host con `llama3.2:3b`:
+- Ollama corriendo en el **host** con `llama3.2:3b`:
+
   ```bash
   curl -fsSL https://ollama.com/install.sh | sh
   ollama pull llama3.2:3b
   ollama serve
   ```
 
-### Levantar la app
+### 2. Levantar el stack
 
 ```bash
 cp .env.example .env              # opcional, hay defaults
 docker compose up -d --build      # 4 contenedores healthy en ~30s
 ```
 
-### Verificar
+Esto arranca **4 servicios**: `mysql`, `backend`, `frontend` (nginx), `docs` (developer site).
+
+### 3. Verificar que todo está arriba
 
 ```bash
-docker compose ps                 # mysql + backend + frontend + docs (healthy)
+docker compose ps                 # los 4 contenedores en estado (healthy)
 curl http://localhost:8000/api/health
-# { "status":"ok", "db":"ok", "llm":"ok", "version":"0.1.0" }
-
-open http://localhost:8080        # UI Vue
-open http://localhost:3001        # Developer site (Docusaurus + Scalar)
-open http://localhost:8000/docs   # Swagger UI
-open http://localhost:8000/redoc  # ReDoc
+# → { "status":"ok", "db":"ok", "llm":"ok", "version":"0.1.0" }
 ```
 
-### Probar una búsqueda
+### 4. Probar una búsqueda
+
+Desde la UI: abre <http://localhost:8080> y escribe la consulta.
+
+Desde curl:
 
 ```bash
 curl -X POST http://localhost:8000/api/search \
@@ -59,7 +79,7 @@ curl -X POST http://localhost:8000/api/search \
 
 ## 🧪 Las 6 búsquedas del PDF
 
-| # | Consulta | Count esperado (seed) |
+| # | Consulta | Resultados esperados (seed) |
 |---|---|---|
 | 1 | "Busco casas de 3 habitaciones en zona 10" | 2 |
 | 2 | "Muéstrame departamentos de menos de $150,000" | 4 |
@@ -68,70 +88,50 @@ curl -X POST http://localhost:8000/api/search \
 | 5 | "Terrenos en venta con precio entre $50,000 y $100,000" | 3 |
 | 6 | "Departamentos con 2 habitaciones en zona 15" | 2 |
 
+Las 6 retornan **≥ 1 resultado**. Ver evidencia en [Developer site → `/intro`](http://localhost:3001/intro).
+
 ---
 
-## 📚 Documentación
+## 🏗 Stack
 
-| Recurso | URL | Cómo levantarlo |
-|---|---|---|
-| **API Swagger UI** | http://localhost:8000/docs | Incluido en el stack del backend |
-| **API ReDoc** | http://localhost:8000/redoc | Incluido en el stack del backend |
-| **OpenAPI 3.1 spec** | http://localhost:8000/openapi.json | Incluido en el stack del backend |
-| **Developer site** (BONUS, Docusaurus + Scalar) | http://localhost:3001 | Incluido en el stack del compose root |
-
-### Sitio para desarrolladores (`backend-developer/`)
-
-Documentación del API con referencia interactiva Scalar (prueba endpoints desde el browser), guías de flujo y catálogo de errores. Levanta como contenedor `docs` junto al resto del stack en `docker compose up -d --build`.
-
-Para desarrollo nativo del sitio (hot reload):
-
-```bash
-cd backend-developer
-npm install
-# Opcional: refrescar spec desde el backend vivo (recomendado tras cambios)
-OPENAPI_URL=http://localhost:8000/openapi.json node scripts/fetch-openapi.mjs
-npm start                         # dev server en http://localhost:3001
-# o build estático:
-npm run build && npm run serve    # http://localhost:3001
-```
-
-**Rutas servidas:**
-
-| Ruta | Contenido |
+| Capa | Tecnología |
 |---|---|
-| `/intro` | Quickstart + curl examples + 6 búsquedas demo |
-| `/flows/search-flow` | Sequence diagram del pipeline NL → SQL |
-| `/architecture/error-codes` | Catálogo de 13 códigos de error (10 server + 3 client) |
-| `/reference/health` | Documentación de `GET /api/health` |
-| `/api-reference` | Scalar UI interactiva sobre el OpenAPI 3.1 |
-
-Detalle completo en [`backend-developer/README.md`](./backend-developer/README.md).
+| Frontend | Vue 3.5 (Composition API) + TypeScript + Vite + Pinia + Tailwind 3 |
+| Backend | FastAPI 0.115 (Python 3.12) + SQLAlchemy 2 async + aiomysql |
+| Validación SQL | `sqlglot` AST + whitelist (triple defensa anti‑injection) |
+| LLM | Ollama (host:11434) · `llama3.2:3b` |
+| BD | MySQL 8.0 |
+| Orquestación | Docker Compose v2 |
+| Developer site (bonus) | Docusaurus 3.8 + `@scalar/docusaurus` |
+| Tests backend | pytest + pytest-asyncio + httpx-mock — **187 tests, 96% coverage** |
+| Tests frontend | vitest + happy-dom + @vue/test-utils — **38 tests, 94% coverage** |
 
 ---
 
-## 🐍 Backend (`backend/`)
+## 📦 Subproyectos
 
-| Recurso | URL | Cómo levantarlo |
+Cada subproyecto tiene su propio README con instrucciones detalladas:
+
+| Subproyecto | Path | Detalles |
 |---|---|---|
-| **API base** | http://localhost:8000 | Incluido en el stack del compose root |
-| **Swagger UI** | http://localhost:8000/docs | Incluido en el stack |
-| **ReDoc** | http://localhost:8000/redoc | Incluido en el stack |
-| **OpenAPI 3.1 spec** | http://localhost:8000/openapi.json | Incluido en el stack |
-| **Health check** | http://localhost:8000/api/health | Incluido en el stack |
+| Backend (FastAPI) | [`backend/`](./backend/README.md) | API `POST /api/search`, validador SQL, integración Ollama |
+| Frontend (Vue 3) | [`frontend/`](./frontend/README.md) | SPA con grid responsive, estados loading/error/empty |
+| Developer site (bonus) | [`backend-developer/`](./backend-developer/README.md) | Docs interactivas con Scalar |
+| Scripts | [`backend/scripts/`](./backend/scripts/README.md) | Scraper opcional de `mapainmueble.com` |
 
-FastAPI 0.115 (Python 3.12) — endpoint `POST /api/search` que traduce consultas NL a SQL via Ollama, valida con `sqlglot` AST + whitelist y ejecuta sobre la tabla `propiedades`. Cobertura **96%**, **187 tests verdes**.
+### Backend — `backend/`
 
-Para dev nativo (hot reload):
+FastAPI 0.115 sobre Python 3.12. Endpoint `POST /api/search` traduce NL → SQL vía Ollama, valida con `sqlglot` AST + whitelist y ejecuta sobre la tabla `propiedades`.
+
+Dev nativo con hot reload:
 
 ```bash
-docker compose up -d mysql        # solo la DB
+docker compose up -d mysql        # sólo la DB
 cd backend
 python3.12 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 DB_HOST=localhost uvicorn app.main:app --reload --port 8000
 ```
-
-**Endpoints:**
 
 | Método | Path | Descripción |
 |---|---|---|
@@ -141,73 +141,18 @@ DB_HOST=localhost uvicorn app.main:app --reload --port 8000
 | GET | `/redoc` | ReDoc |
 | GET | `/openapi.json` | Spec OpenAPI 3.1 |
 
-Detalle completo en [`backend/README.md`](./backend/README.md).
+### Frontend — `frontend/`
 
----
+Vue 3.5 (Composition API) + TypeScript + Vite + Pinia + Tailwind 3. SPA con grid responsive, estados loading/error/empty y toggle "Mostrar SQL generado".
 
-## 🕷 Scripts — `scrape_mapainmueble.py`
-
-Scraper opcional del sitemap de [mapainmueble.com](https://mapainmueble.com/sitemap.xml). Descarga fichas, parsea JSON-LD (`schema.org/RealEstateListing`) y carga filas nuevas en la tabla `propiedades` con dedupe por `UNIQUE (titulo, ubicacion)` + `INSERT IGNORE`. Por defecto **sólo ingiere ventas** (descarta alquileres para no romper los rangos de precio).
-
-**Pre-requisito:** MySQL del proyecto corriendo (`docker compose up -d mysql backend`).
-
-### Uso
-
-```bash
-# Dry-run rápido (5 fichas, no escribe en DB)
-docker compose exec backend python -m scripts.scrape_mapainmueble --dry-run --limit 5
-
-# Primer ingest real (100 propiedades)
-docker compose exec backend python -m scripts.scrape_mapainmueble --limit 100
-
-# Ingest grande con más paralelismo
-docker compose exec backend python -m scripts.scrape_mapainmueble --limit 500 --concurrency 8 --batch-size 100
-
-# Ingest completo del sitemap (~5 000 fichas)
-docker compose exec backend python -m scripts.scrape_mapainmueble --concurrency 8
-
-# Incluir alquileres (default: descartados)
-docker compose exec backend python -m scripts.scrape_mapainmueble --include-alquiler --limit 100
-```
-
-### Flags
-
-| Flag | Default | Descripción |
-|---|---|---|
-| `--limit N` | (todas) | Recorta a las primeras N URLs del sitemap |
-| `--concurrency N` | 6 | Fetchs HTTP simultáneos (≤ 10) |
-| `--batch-size N` | 50 | Filas por `INSERT IGNORE` |
-| `--dry-run` | false | No escribe en MySQL; sólo cuenta |
-| `--include-alquiler` | false | Incluye alquileres (slug pos 1 = `A`) |
-| `--log-level` | INFO | `DEBUG \| INFO \| WARNING \| ERROR` |
-
-### Stats que reporta
-
-`fetched`, `inserted`, `skipped_existing`, `skipped_filtered`, `skipped_fetch_error`, `skipped_parse_error`, `db_insert_ignored`.
-
-Es **idempotente**: una segunda corrida con el mismo `--limit` reporta `skipped_existing ≈ fetched`. Detalle completo en [`backend/scripts/README.md`](./backend/scripts/README.md).
-
----
-
-## 🎨 Frontend (`frontend/`)
-
-| Recurso | URL | Cómo levantarlo |
-|---|---|---|
-| **UI Vue (producción nginx)** | http://localhost:8080 | Incluido en el stack del compose root |
-| **UI Vue (Vite HMR dev)** | http://localhost:5173 | `cd frontend && npm install && npm run dev` |
-
-Vue 3.5 (Composition API) + TypeScript + Vite + Pinia + Tailwind 3. SPA con grid responsive, estados loading/error/empty y toggle "Mostrar SQL generado". Cobertura **91%**, **26 tests verdes**.
-
-Para dev nativo con HMR:
+Dev nativo con HMR (Vite):
 
 ```bash
 cd frontend
 npm install
 echo "VITE_API_BASE_URL=http://localhost:8000" > .env.local
-npm run dev                       # http://localhost:5173
+npm run dev                       # → http://localhost:5173
 ```
-
-**Componentes:**
 
 | Componente | Rol |
 |---|---|
@@ -216,112 +161,77 @@ npm run dev                       # http://localhost:5173
 | `PropertyGrid.vue` | Grid responsive (3/2/1 cols) |
 | `EmptyState.vue` | Sin resultados con sugerencia útil |
 | `ErrorAlert.vue` | Banda dismissible con `error.code` humanizado |
-| `LoadingSpinner.vue` | SkeletonCards animadas |
+| `LoadingSpinner.vue` | Skeleton cards animadas |
 | `SqlPreview.vue` | Bloque `<pre>` con el SQL generado (toggle) |
 | `AppHeader.vue` | Header con toggle SQL |
 
-Detalle completo en [`frontend/README.md`](./frontend/README.md).
+### Developer site (bonus) — `backend-developer/`
 
----
+Documentación del API con referencia interactiva Scalar (prueba endpoints desde el browser), guías de flujo y catálogo de errores. **Levanta automático** como contenedor `docs` con `docker compose up -d --build`.
 
-## 📁 Estructura
+Dev nativo (hot reload):
 
-```
-proyecto-propiedades/
-├── README.md                     ← Este archivo
-├── docker-compose.yml            ← Orquestador (mysql + backend + frontend + docs)
-├── docker-compose.override.yml   ← Hardenings opcionales (healthchecks, RO, charset)
-├── .env.example
-├── .gitignore
-├── .claude/commands/             ← Slash commands (audit-openapi, code-review,
-│                                    contract-check, sync-api-docs, test-audit)
-│
-├── frontend/                     ← Vue 3 SPA
-│   ├── src/
-│   │   ├── components/           ← SearchBar, PropertyCard, PropertyGrid,
-│   │   │                            EmptyState, ErrorAlert, LoadingSpinner,
-│   │   │                            SqlPreview, AppHeader
-│   │   ├── views/SearchView.vue
-│   │   ├── stores/search.ts      ← Pinia
-│   │   ├── composables/useSearch.ts
-│   │   ├── services/api.ts       ← axios + ApiError envelope
-│   │   ├── types/api.ts          ← regenerable desde openapi.json
-│   │   ├── App.vue
-│   │   └── main.ts
-│   ├── tests/
-│   │   ├── unit/                 ← vitest + happy-dom
-│   │   └── smoke/                ← golden path · `npm run test:smoke`
-│   ├── Dockerfile
-│   ├── nginx.conf
-│   ├── package.json
-│   └── README.md
-│
-├── backend/                      ← FastAPI
-│   ├── app/
-│   │   ├── __init__.py
-│   │   ├── main.py               ← lifespan + middleware + handlers
-│   │   ├── routes.py             ← /api/search, /api/health
-│   │   ├── schemas.py            ← Pydantic DTOs
-│   │   ├── repositories.py       ← Repository ABC + MySQL + InMemory
-│   │   ├── search_service.py     ← Orquestador (Pipes & Filters)
-│   │   ├── llm_service.py        ← LLMProvider Protocol + Ollama + Mock
-│   │   ├── sql_validator.py      ← sqlglot AST + whitelist
-│   │   ├── prompts.py            ← PROMPT_VERSION=v1 + few-shot
-│   │   ├── config.py             ← Pydantic Settings + @lru_cache
-│   │   ├── exceptions.py         ← 10 errores tipados
-│   │   ├── database.py           ← DataSource ABC + MySQLDataSource
-│   │   └── dependencies.py       ← Annotated[T, Depends(...)] factories
-│   ├── persistencia/
-│   │   ├── 01_schema.sql         ← DDL idempotente (IF NOT EXISTS)
-│   │   ├── 02_seed_data.sql      ← 20 filas (INSERT IGNORE + UNIQUE)
-│   │   └── runner.py             ← run_migrations_if_needed() (lifespan)
-│   ├── scripts/                  ← (opcional) scrape_mapainmueble.py
-│   ├── tests/
-│   │   ├── unit/                 ← 96 tests (validator, llm, service, ...)
-│   │   ├── integration/          ← 25 tests con MySQL real
-│   │   ├── contract/             ← 17 tests (LSP cross-impl + OpenAPI snapshot)
-│   │   └── smoke/                ← 13 tests · `pytest -m smoke`
-│   ├── Dockerfile
-│   ├── requirements.txt
-│   ├── pyproject.toml            ← ruff + mypy + pytest + coverage
-│   └── README.md
-│
-└── backend-developer/            ← BONUS · Docusaurus 3.8 + @scalar/docusaurus
-    ├── docs/
-    │   ├── intro.md
-    │   ├── flows/search-flow.md
-    │   ├── architecture/error-codes.md
-    │   └── reference/health.md
-    ├── static/openapi.json       ← spec versionado · refresh con fetch-openapi.mjs
-    ├── scripts/fetch-openapi.mjs
-    ├── docusaurus.config.ts
-    ├── package.json
-    ├── Dockerfile                ← build estático + nginx :3001
-    ├── nginx.conf
-    └── README.md
+```bash
+cd backend-developer
+npm install
+# Opcional: refrescar spec desde el backend vivo
+OPENAPI_URL=http://localhost:8000/openapi.json node scripts/fetch-openapi.mjs
+npm start                         # → http://localhost:3001
+# o build estático: npm run build && npm run serve
 ```
 
----
+**Rutas servidas en <http://localhost:3001>:**
 
-## 🏗 Stack
-
-| Capa | Tecnología |
+| Ruta | Contenido |
 |---|---|
-| Frontend | Vue 3.5 (Composition API) + TS + Vite + Pinia + Tailwind 3 |
-| Backend | FastAPI 0.115 (Python 3.12) + SQLAlchemy 2 async + aiomysql |
-| Validación | `sqlglot` AST whitelist (triple defensa anti-injection) |
-| LLM | Ollama (host:11434) · `llama3.2:3b` |
-| BD | MySQL 8.0 |
-| Orquestación | Docker Compose v2 (baseline PDF + override opcional) |
-| Docs site (bonus) | Docusaurus 3.8 + `@scalar/docusaurus` |
-| Tests backend | pytest + pytest-asyncio + httpx-mock (151 tests) |
-| Tests frontend | vitest + happy-dom + @vue/test-utils (26 tests) |
+| `/intro` | Quickstart + curl examples + 6 búsquedas demo |
+| `/flows/search-flow` | Sequence diagram del pipeline NL → SQL |
+| `/architecture/error-codes` | Catálogo de 13 códigos de error |
+| `/reference/health` | Documentación de `GET /api/health` |
+| `/api-reference` | Scalar UI interactiva sobre el OpenAPI 3.1 |
+
+### Scripts — `backend/scripts/scrape_mapainmueble.py`
+
+Scraper opcional del sitemap de [mapainmueble.com](https://mapainmueble.com/sitemap.xml). Descarga fichas, parsea JSON‑LD (`schema.org/RealEstateListing`) y carga filas nuevas en la tabla `propiedades` con dedupe `INSERT IGNORE` + `UNIQUE (titulo, ubicacion)`. Por defecto **sólo ingiere ventas**.
+
+```bash
+# Dry-run (5 fichas, no escribe)
+docker compose exec backend python -m scripts.scrape_mapainmueble --dry-run --limit 5
+
+# Ingest real
+docker compose exec backend python -m scripts.scrape_mapainmueble --limit 100
+```
+
+| Flag | Default | Descripción |
+|---|---|---|
+| `--limit N` | (todas) | Recorta a las primeras N URLs del sitemap |
+| `--concurrency N` | 6 | Fetchs HTTP simultáneos (≤ 10) |
+| `--batch-size N` | 50 | Filas por `INSERT IGNORE` |
+| `--dry-run` | false | No escribe en MySQL |
+| `--include-alquiler` | false | Incluye alquileres (default: solo ventas) |
+| `--log-level` | INFO | `DEBUG \| INFO \| WARNING \| ERROR` |
+
+Es **idempotente**: una segunda corrida con el mismo `--limit` reporta `skipped_existing ≈ fetched`. Detalle en [`backend/scripts/README.md`](./backend/scripts/README.md).
+
+---
+
+## 🛡 Seguridad: triple defensa anti‑injection
+
+1. **Sanitización de entrada** — trim, len ≤ 500, control chars rechazados.
+2. **Prompt + LLM** — temperature 0.0, few‑shot con esquema, timeout 15 s.
+3. **Validación SQL con `sqlglot` AST + whitelist**:
+   - 1 sólo `SELECT` (multi‑statement rechazado)
+   - Tabla única `propiedades`
+   - Sin DML/DDL/grants
+   - Sin `SLEEP`/`BENCHMARK`/`LOAD_FILE`/`INTO OUTFILE`
+   - `LIMIT` clamp a 200
+4. **(Opcional)** Usuario `appuser_ro` con sólo `GRANT SELECT` — activar en `docker-compose.override.yml`.
 
 ---
 
 ## 📡 Catálogo de errores API
 
-Envelope:
+Envelope estándar:
 
 ```json
 { "error": { "code": "...", "message": "...", "detail": null, "request_id": "..." } }
@@ -330,11 +240,11 @@ Envelope:
 | HTTP | `error.code` |
 |---|---|
 | 422 | `EMPTY_QUERY`, `LLM_TIMEOUT`, `LLM_INVALID_OUTPUT`, `SQL_NOT_SELECT`, `SQL_FORBIDDEN_TABLE`, `SQL_FORBIDDEN_STATEMENT`, `SQL_DANGEROUS_FUNCTION` |
-| 429 | `RATE_LIMIT` (opt-in) |
+| 429 | `RATE_LIMIT` (opt‑in) |
 | 500 | `DB_ERROR` |
 | 503 | `LLM_UNAVAILABLE` |
 
-Detalle por código en [Developer site → `/architecture/error-codes`](http://localhost:3001/architecture/error-codes).
+Detalle por código: [Developer site → `/architecture/error-codes`](http://localhost:3001/architecture/error-codes).
 
 ---
 
@@ -348,33 +258,17 @@ source venv/bin/activate
 
 pytest                      # 187 tests (unit + integration + contract + smoke)
 pytest --cov=app            # con cobertura
-pytest -m smoke             # sólo golden path para release (13 tests)
-pytest tests/unit           # sólo unit
-pytest tests/integration    # con MySQL real
+pytest -m smoke             # sólo golden path (13 tests)
 ```
 
 ### Frontend
 
 ```bash
 cd frontend
-npm run test:ci             # 26 tests con cobertura
+npm run test:ci             # 38 tests con cobertura
 npm run test:smoke          # sólo golden path (6 tests)
 npm run typecheck           # vue-tsc --noEmit
 ```
-
----
-
-## 🛡 Seguridad: triple defensa anti-injection
-
-1. **Sanitización entrada** — trim, len ≤ 500, control chars rechazados
-2. **Prompt + LLM** — temp 0.0, few-shot con esquema, timeout 15s
-3. **`sqlglot` AST + whitelist**:
-   - 1 sólo `SELECT` (multi-statement rechazado)
-   - Tabla única `propiedades`
-   - Sin DML/DDL/grants
-   - Sin `SLEEP`/`BENCHMARK`/`LOAD_FILE`/`INTO OUTFILE`
-   - `LIMIT` clamp a 200
-4. **(opcional, hardening)** Usuario `appuser_ro` con sólo `GRANT SELECT` — activar en `docker-compose.override.yml`
 
 ---
 
@@ -385,30 +279,33 @@ npm run typecheck           # vue-tsc --noEmit
 | Backend tests | — | **187 verdes** |
 | Backend coverage global | ≥ 80% | **96%** ✓ |
 | Backend coverage `sql_validator` | ≥ 95% | **97%** ✓ |
-| Frontend tests | — | **26 verdes** |
-| Frontend coverage | — | **91%** |
-| Cold-start `docker compose up -d --build` (4 servicios) | ≤ 90s | **~30s** ✓ |
-| p50 `/api/search` | ≤ 8s | **~1.5s** (caliente) ✓ |
+| Frontend tests | — | **38 verdes** |
+| Frontend coverage | — | **94%** |
+| Cold start `docker compose up -d --build` (4 servicios) | ≤ 90 s | **~30 s** ✓ |
+| p50 `/api/search` | ≤ 8 s | **~1.5 s** (caliente) ✓ |
 | Las 6 búsquedas PDF retornan ≥ 1 | 6/6 | **6/6** ✓ |
 | ruff / mypy / lizard / vue-tsc / build | PASS | **PASS** ✓ |
 
 ---
 
-## 🛠 Dev nativo
+## 📁 Estructura
 
-Las secciones [🐍 Backend](#-backend-backend), [🎨 Frontend](#-frontend-frontend) y [📚 Documentación](#-documentación) tienen sus comandos individuales. Pipeline típico:
-
-```bash
-docker compose up -d mysql        # 1. sólo DB
-cd backend && uvicorn app.main:app --reload --port 8000   # 2. backend nativo
-cd ../frontend && npm run dev                              # 3. frontend Vite
-cd ../backend-developer && npm start                       # 4. (opcional) docs
 ```
-
-READMEs por subproyecto para detalle:
-- [`backend/README.md`](./backend/README.md)
-- [`frontend/README.md`](./frontend/README.md)
-- [`backend-developer/README.md`](./backend-developer/README.md)
+proyecto-propiedades/
+├── README.md                     ← Este archivo
+├── docker-compose.yml            ← mysql + backend + frontend + docs
+├── docker-compose.override.yml   ← Hardenings opcionales (healthchecks, RO, charset)
+├── .env.example
+│
+├── frontend/                     ← Vue 3 SPA               → :8080
+├── backend/                      ← FastAPI                 → :8000
+│   ├── app/                      ← código de la app
+│   ├── persistencia/             ← DDL + seed + migrations
+│   ├── scripts/                  ← scraper opcional
+│   └── tests/                    ← 187 tests
+├── backend-developer/            ← Docusaurus + Scalar     → :3001
+└── .claude/commands/             ← Slash commands (audits + syncs)
+```
 
 ---
 
@@ -419,10 +316,10 @@ Comandos versionados para automatizar audits y syncs:
 | Comando | Uso |
 |---|---|
 | `/audit-openapi` | Audita la spec OpenAPI (info, tags, schemas, examples, errores) |
-| `/code-review` | Audit pre-merge: dead code, patterns, anti-patterns, coverage, gates |
+| `/code-review` | Audit pre‑merge: dead code, patterns, coverage, gates |
 | `/contract-check` | Verifica sync backend ↔ types frontend ↔ docs spec |
 | `/sync-api-docs` | Hidrata `backend-developer/static/openapi.json` desde el backend vivo |
-| `/test-audit` | Auditor de tests con foco en cobertura crítica (`sql_validator` ≥95%) |
+| `/test-audit` | Auditor de tests con foco en cobertura crítica (`sql_validator` ≥ 95%) |
 
 ---
 
@@ -430,18 +327,18 @@ Comandos versionados para automatizar audits y syncs:
 
 | Síntoma | Fix |
 |---|---|
-| `ConnectionRefusedError` a mysql | Esperar `(healthy)` o usar override (incluye `condition: service_healthy`) |
-| 503 `LLM_UNAVAILABLE` | Verificar `ollama serve` y que `ollama list` contenga `llama3.2:3b` |
+| `ConnectionRefusedError` a MySQL | Esperar `(healthy)` o usar el override (incluye `condition: service_healthy`) |
+| 503 `LLM_UNAVAILABLE` | Verificar `ollama serve` y que `ollama list` incluya `llama3.2:3b` |
 | Linux: `host.docker.internal` no resuelve | El override añade `extra_hosts: host-gateway` |
 | `SHOW TABLES` vacío | `docker compose down -v && docker compose up -d` |
 | MySQL falla con "password not specified" | El compose toma defaults; si no, `cp .env.example .env` |
-| `npm install` falla en `backend-developer` | Usar Node 20 LTS (`nvm use 20`) — Docusaurus 3.8 no soporta Node 24+ todavía |
+| `npm install` falla en `backend-developer` | Usar Node 20 LTS (`nvm use 20`) — Docusaurus 3.8 no soporta Node 24+ |
 
 ---
 
 ## 🎬 Video demo
 
-_Pendiente — link al cierre._
+[Video demo](https://youtube.com/watch?v=vD4sIWYdvGc&feature=youtu.be)
 
 ## 📄 License
 
