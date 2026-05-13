@@ -8,7 +8,10 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.openapi.docs import get_redoc_html
+from fastapi.responses import HTMLResponse, JSONResponse
+
+REDOC_JS_URL = "https://cdn.jsdelivr.net/npm/redoc@2.5.0/bundles/redoc.standalone.js"
 
 from app import __version__
 from app.config import get_settings
@@ -122,6 +125,7 @@ def create_app() -> FastAPI:
         contact={"name": "Braian Staimer", "url": "https://github.com/braianstaimer"},
         license_info={"name": "MIT"},
         lifespan=lifespan,
+        redoc_url=None,  # se reemplaza por endpoint custom con CDN pineado (ver _register_redoc)
         openapi_tags=[
             {
                 "name": "search",
@@ -135,8 +139,22 @@ def create_app() -> FastAPI:
     )
     _register_middleware(app, settings)
     _register_exception_handlers(app)
+    _register_redoc(app)
     app.include_router(api_router)
     return app
+
+
+def _register_redoc(app: FastAPI) -> None:
+    """FastAPI 0.115 default usa `redoc@next` (CDN tag deprecada — render vacío).
+    Servimos /redoc con un CDN pineado a 2.5.0 que sí soporta OpenAPI 3.1."""
+
+    @app.get("/redoc", include_in_schema=False, response_class=HTMLResponse)
+    async def custom_redoc() -> HTMLResponse:
+        return get_redoc_html(
+            openapi_url=app.openapi_url or "/openapi.json",
+            title=f"{app.title} - ReDoc",
+            redoc_js_url=REDOC_JS_URL,
+        )
 
 
 app = create_app()

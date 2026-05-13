@@ -31,17 +31,20 @@ Solución al assessment Full Stack. App web que recibe consultas en español nat
 
 ```bash
 cp .env.example .env              # opcional, hay defaults
-docker compose up -d --build      # 3 contenedores healthy en ~17s
+docker compose up -d --build      # 4 contenedores healthy en ~30s
 ```
 
 ### Verificar
 
 ```bash
-docker compose ps                 # mysql + backend + frontend (healthy)
+docker compose ps                 # mysql + backend + frontend + docs (healthy)
 curl http://localhost:8000/api/health
 # { "status":"ok", "db":"ok", "llm":"ok", "version":"0.1.0" }
 
 open http://localhost:8080        # UI Vue
+open http://localhost:3001        # Developer site (Docusaurus + Scalar)
+open http://localhost:8000/docs   # Swagger UI
+open http://localhost:8000/redoc  # ReDoc
 ```
 
 ### Probar una búsqueda
@@ -74,11 +77,13 @@ curl -X POST http://localhost:8000/api/search \
 | **API Swagger UI** | http://localhost:8000/docs | Incluido en el stack del backend |
 | **API ReDoc** | http://localhost:8000/redoc | Incluido en el stack del backend |
 | **OpenAPI 3.1 spec** | http://localhost:8000/openapi.json | Incluido en el stack del backend |
-| **Developer site** (BONUS, Docusaurus + Scalar) | http://localhost:3001 | `cd backend-developer && npm install && npm start` |
+| **Developer site** (BONUS, Docusaurus + Scalar) | http://localhost:3001 | Incluido en el stack del compose root |
 
 ### Sitio para desarrolladores (`backend-developer/`)
 
-Documentación del API con referencia interactiva Scalar (prueba endpoints desde el browser), guías de flujo y catálogo de errores.
+Documentación del API con referencia interactiva Scalar (prueba endpoints desde el browser), guías de flujo y catálogo de errores. Levanta como contenedor `docs` junto al resto del stack en `docker compose up -d --build`.
+
+Para desarrollo nativo del sitio (hot reload):
 
 ```bash
 cd backend-developer
@@ -109,7 +114,7 @@ Detalle completo en [`backend-developer/README.md`](./backend-developer/README.m
 ```
 proyecto-propiedades/
 ├── README.md                     ← Este archivo
-├── docker-compose.yml            ← Orquestador (mysql + backend + frontend)
+├── docker-compose.yml            ← Orquestador (mysql + backend + frontend + docs)
 ├── docker-compose.override.yml   ← Hardenings opcionales (healthchecks, RO, charset)
 ├── .env.example
 ├── .gitignore
@@ -176,6 +181,8 @@ proyecto-propiedades/
     ├── scripts/fetch-openapi.mjs
     ├── docusaurus.config.ts
     ├── package.json
+    ├── Dockerfile                ← build estático + nginx :3001
+    ├── nginx.conf
     └── README.md
 ```
 
@@ -234,7 +241,7 @@ Detalle en [Developer site → `/architecture/error-codes`](http://localhost:300
 cd backend
 source venv/bin/activate
 
-pytest                      # 151 tests (unit + integration + contract + smoke)
+pytest                      # 187 tests (unit + integration + contract + smoke)
 pytest --cov=app            # con cobertura
 pytest -m smoke             # sólo golden path para release (13 tests)
 pytest tests/unit           # sólo unit
@@ -270,12 +277,12 @@ npm run typecheck           # vue-tsc --noEmit
 
 | Métrica | Target | Actual |
 |---|---|---|
-| Backend tests | — | **151 verdes** |
-| Backend coverage global | ≥ 80% | **95.57%** ✓ |
+| Backend tests | — | **187 verdes** |
+| Backend coverage global | ≥ 80% | **96%** ✓ |
 | Backend coverage `sql_validator` | ≥ 95% | **97%** ✓ |
 | Frontend tests | — | **26 verdes** |
 | Frontend coverage | — | **91%** |
-| Cold-start `docker compose up -d --build` | ≤ 90s | **~17s** ✓ |
+| Cold-start `docker compose up -d --build` (4 servicios) | ≤ 90s | **~30s** ✓ |
 | p50 `/api/search` | ≤ 8s | **~1.5s** (caliente) ✓ |
 | Las 6 búsquedas PDF retornan ≥ 1 | 6/6 | **6/6** ✓ |
 | ruff / mypy / lizard / vue-tsc / build | PASS | **PASS** ✓ |

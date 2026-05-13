@@ -1,4 +1,4 @@
-# Orquestador root — levanta mysql + backend + frontend.
+# Orquestador root — levanta mysql + backend + frontend + docs (bonus).
 # Variables se leen desde .env (copia de .env.example) con fallback a defaults.
 #
 # Uso (con .env):
@@ -10,7 +10,8 @@
 #
 # Verificar:
 #   curl http://localhost:8000/api/health
-#   open http://localhost:8080
+#   open http://localhost:8080      # UI Vue
+#   open http://localhost:3001      # Developer site (Docusaurus + Scalar)
 services:
   mysql:
     image: mysql:8.0
@@ -57,3 +58,9 @@ services:
       - backend
     ports:
       - "8080:8080"
+
+  docs:
+    build: ./backend-developer
+    container_name: proyecto-propiedades-docs
+    ports:
+      - "3001:3001"
