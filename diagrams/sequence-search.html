@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>proyecto-propiedades · Secuencia /api/search</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+           background: #f8fafc; color: #0f172a; margin: 0; padding: 32px; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    h1 { font-size: 28px; letter-spacing: -0.02em; margin-bottom: 4px; }
+    .crumb { color: #64748b; font-size: 14px; margin-bottom: 24px; }
+    .crumb a { color: #2563eb; text-decoration: none; }
+    .card { background: white; border-radius: 12px; padding: 32px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); margin-bottom: 16px; }
+    h2 { margin-top: 0; margin-bottom: 12px; font-size: 18px; }
+    code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+    .meta { color: #64748b; font-size: 14px; margin-bottom: 16px; }
+    .diagram { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="crumb"><a href="index.html">← Diagramas</a> · Diagrama 2 de 5</div>
+    <h1>Secuencia · <code>POST /api/search</code></h1>
+
+    <div class="card">
+      <h2>Camino feliz (200 OK)</h2>
+      <p class="meta">Latencia esperada: 2-8s (dominado por LLM en CPU).</p>
+
+      <svg class="diagram" viewBox="0 0 1080 760" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Sequence diagram happy path">
+        <defs>
+          <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#1e40af"/>
+          </marker>
+          <marker id="arrBack" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#16a34a"/>
+          </marker>
+        </defs>
+
+        <!-- Participants (boxes at top + lifelines) -->
+        <g font-family="-apple-system, sans-serif" font-size="12" font-weight="600">
+          <rect x="20"   y="20" width="120" height="36" rx="6" fill="#dbeafe" stroke="#2563eb"/><text x="80"   y="42" text-anchor="middle">Vue (UI)</text>
+          <rect x="170" y="20" width="120" height="36" rx="6" fill="#dbeafe" stroke="#2563eb"/><text x="230" y="42" text-anchor="middle">FastAPI Router</text>
+          <rect x="320" y="20" width="120" height="36" rx="6" fill="#fef3c7" stroke="#f59e0b"/><text x="380" y="42" text-anchor="middle">SearchService</text>
+          <rect x="470" y="20" width="120" height="36" rx="6" fill="#fef3c7" stroke="#f59e0b"/><text x="530" y="42" text-anchor="middle">LLMService</text>
+          <rect x="620" y="20" width="120" height="36" rx="6" fill="#f3e8ff" stroke="#9333ea"/><text x="680" y="42" text-anchor="middle">Ollama (host)</text>
+          <rect x="770" y="20" width="120" height="36" rx="6" fill="#fef3c7" stroke="#f59e0b"/><text x="830" y="42" text-anchor="middle">SQLValidator</text>
+          <rect x="920" y="20" width="140" height="36" rx="6" fill="#dcfce7" stroke="#16a34a"/><text x="990" y="42" text-anchor="middle">PropertyRepo→MySQL</text>
+        </g>
+
+        <!-- Lifelines -->
+        <g stroke="#cbd5e1" stroke-width="1" stroke-dasharray="4 4">
+          <line x1="80"   y1="60" x2="80"   y2="730"/>
+          <line x1="230" y1="60" x2="230" y2="730"/>
+          <line x1="380" y1="60" x2="380" y2="730"/>
+          <line x1="530" y1="60" x2="530" y2="730"/>
+          <line x1="680" y1="60" x2="680" y2="730"/>
+          <line x1="830" y1="60" x2="830" y2="730"/>
+          <line x1="990" y1="60" x2="990" y2="730"/>
+        </g>
+
+        <!-- Messages -->
+        <g font-family="-apple-system, sans-serif" font-size="11" fill="#0f172a">
+          <!-- step 1: User → API -->
+          <line x1="80" y1="100" x2="225" y2="100" stroke="#1e40af" stroke-width="1.5" marker-end="url(#arr)"/>
+          <text x="92" y="93">1. POST /api/search { query }</text>
+
+          <!-- step 2: API → Service -->
+          <line x1="230" y1="140" x2="375" y2="140" stroke="#1e40af" stroke-width="1.5" marker-end="url(#arr)"/>
+          <text x="240" y="133">2. search(query)</text>
+
+          <!-- step 3: Service self → sanitize -->
+          <line x1="380" y1="180" x2="430" y2="180" stroke="#1e40af" stroke-width="1.5"/>
+          <line x1="430" y1="180" x2="430" y2="200" stroke="#1e40af" stroke-width="1.5"/>
+          <line x1="430" y1="200" x2="380" y2="200" stroke="#1e40af" stroke-width="1.5" marker-end="url(#arr)"/>
+          <text x="386" y="174">3. sanitize · trim · len≤500</text>
+
+          <!-- step 4: Service → LLM -->
+          <line x1="380" y1="240" x2="525" y2="240" stroke="#1e40af" stroke-width="1.5" marker-end="url(#arr)"/>
+          <text x="390" y="233">4. generate_sql(query)</text>
+
+          <!-- step 5: LLM → Ollama -->
+          <line x1="530" y1="280" x2="675" y2="280" stroke="#1e40af" stroke-width="1.5" marker-end="url(#arr)"/>
+          <text x="540" y="273">5. POST /api/generate · timeout 15s · temp 0.0</text>
+
+          <!-- step 6: Ollama → LLM -->
+          <line x1="680" y1="320" x2="535" y2="320" stroke="#16a34a" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrBack)"/>
+          <text x="540" y="313">6. raw response (puede traer ```sql + texto extra)</text>
+
+          <!-- step 7: LLM self post-process -->
+          <line x1="530" y1="360" x2="580" y2="360" stroke="#1e40af" stroke-width="1.5"/>
+          <line x1="580" y1="360" x2="580" y2="380" stroke="#1e40af" stroke-width="1.5"/>
+          <line x1="580" y1="380" x2="530" y2="380" stroke="#1e40af" stroke-width="1.5" marker-end="url(#arr)"/>
+          <text x="540" y="354">7. strip ``` · primer ;</text>
+
+          <!-- step 8: LLM → Service -->
+          <line x1="530" y1="420" x2="385" y2="420" stroke="#16a34a" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrBack)"/>
+          <text x="390" y="413">8. SQL string</text>
+
+          <!-- step 9: Service → Validator -->
+          <line x1="380" y1="460" x2="825" y2="460" stroke="#1e40af" stroke-width="1.5" marker-end="url(#arr)"/>
+          <text x="490" y="453">9. validate(sql)</text>
+
+          <!-- step 10: Validator self -->
+          <line x1="830" y1="500" x2="880" y2="500" stroke="#1e40af" stroke-width="1.5"/>
+          <line x1="880" y1="500" x2="880" y2="520" stroke="#1e40af" stroke-width="1.5"/>
+          <line x1="880" y1="520" x2="830" y2="520" stroke="#1e40af" stroke-width="1.5" marker-end="url(#arr)"/>
+          <text x="838" y="494">10. sqlglot AST · whitelist</text>
+
+          <!-- step 11: Validator → Service -->
+          <line x1="830" y1="560" x2="385" y2="560" stroke="#16a34a" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrBack)"/>
+          <text x="500" y="553">11. ValidatedSQL (LIMIT 50 inyectado)</text>
+
+          <!-- step 12: Service → Repo -->
+          <line x1="380" y1="600" x2="985" y2="600" stroke="#1e40af" stroke-width="1.5" marker-end="url(#arr)"/>
+          <text x="600" y="593">12. execute_validated_select(sql)</text>
+
+          <!-- step 13: Repo → Service -->
+          <line x1="990" y1="640" x2="385" y2="640" stroke="#16a34a" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrBack)"/>
+          <text x="620" y="633">13. List[PropertyRow]</text>
+
+          <!-- step 14: Service → API -->
+          <line x1="380" y1="680" x2="235" y2="680" stroke="#16a34a" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrBack)"/>
+          <text x="245" y="673">14. SearchResponse</text>
+
+          <!-- step 15: API → User -->
+          <line x1="230" y1="720" x2="85" y2="720" stroke="#16a34a" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrBack)"/>
+          <text x="92" y="713">15. 200 { sql, count, results, took_ms }</text>
+        </g>
+      </svg>
+    </div>
+
+    <div class="card">
+      <h2>Camino de error · LLM produce SQL no-SELECT (retry correctivo)</h2>
+
+      <svg class="diagram" viewBox="0 0 720 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Sequence error path retry">
+        <defs>
+          <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#dc2626"/>
+          </marker>
+          <marker id="arr3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#16a34a"/>
+          </marker>
+        </defs>
+        <g font-family="-apple-system, sans-serif" font-size="12" font-weight="600">
+          <rect x="40"  y="20" width="120" height="36" rx="6" fill="#dbeafe" stroke="#2563eb"/><text x="100" y="42" text-anchor="middle">FastAPI</text>
+          <rect x="200" y="20" width="120" height="36" rx="6" fill="#fef3c7" stroke="#f59e0b"/><text x="260" y="42" text-anchor="middle">SearchService</text>
+          <rect x="360" y="20" width="120" height="36" rx="6" fill="#fef3c7" stroke="#f59e0b"/><text x="420" y="42" text-anchor="middle">LLMService</text>
+          <rect x="520" y="20" width="120" height="36" rx="6" fill="#fef3c7" stroke="#f59e0b"/><text x="580" y="42" text-anchor="middle">SQLValidator</text>
+        </g>
+        <g stroke="#cbd5e1" stroke-width="1" stroke-dasharray="4 4">
+          <line x1="100" y1="60" x2="100" y2="400"/>
+          <line x1="260" y1="60" x2="260" y2="400"/>
+          <line x1="420" y1="60" x2="420" y2="400"/>
+          <line x1="580" y1="60" x2="580" y2="400"/>
+        </g>
+        <g font-family="-apple-system, sans-serif" font-size="11" fill="#0f172a">
+          <line x1="100" y1="100" x2="255" y2="100" stroke="#1e40af" stroke-width="1.5" marker-end="url(#arr2)"/>
+          <text x="110" y="93">1. search("borra todo")</text>
+
+          <line x1="260" y1="140" x2="415" y2="140" stroke="#1e40af" stroke-width="1.5" marker-end="url(#arr2)"/>
+          <text x="270" y="133">2. generate_sql(...)</text>
+
+          <line x1="420" y1="180" x2="265" y2="180" stroke="#16a34a" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arr3)"/>
+          <text x="270" y="173">3. "DROP TABLE propiedades"</text>
+
+          <line x1="260" y1="220" x2="575" y2="220" stroke="#1e40af" stroke-width="1.5" marker-end="url(#arr2)"/>
+          <text x="280" y="213">4. validate(sql)</text>
+
+          <line x1="580" y1="260" x2="265" y2="260" stroke="#dc2626" stroke-width="1.5" marker-end="url(#arr2)"/>
+          <text x="280" y="253">5. raise SQLNotSelectError</text>
+
+          <line x1="260" y1="300" x2="415" y2="300" stroke="#1e40af" stroke-width="1.5" marker-end="url(#arr2)"/>
+          <text x="270" y="293">6. retry generate_sql(query, hint="must be SELECT")</text>
+
+          <line x1="420" y1="340" x2="265" y2="340" stroke="#16a34a" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arr3)"/>
+          <text x="270" y="333">7. "SELECT * FROM propiedades LIMIT 0"</text>
+
+          <line x1="260" y1="380" x2="105" y2="380" stroke="#16a34a" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arr3)"/>
+          <text x="120" y="373">8. SearchResponse(count=0, results=[])</text>
+        </g>
+      </svg>
+    </div>
+
+    <div class="card">
+      <h2>Camino de error · Ollama timeout</h2>
+
+      <svg class="diagram" viewBox="0 0 720 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Sequence error path timeout">
+        <defs>
+          <marker id="arr4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#dc2626"/>
+          </marker>
+        </defs>
+        <g font-family="-apple-system, sans-serif" font-size="12" font-weight="600">
+          <rect x="40"  y="20" width="120" height="36" rx="6" fill="#dbeafe" stroke="#2563eb"/><text x="100" y="42" text-anchor="middle">FastAPI</text>
+          <rect x="200" y="20" width="120" height="36" rx="6" fill="#fef3c7" stroke="#f59e0b"/><text x="260" y="42" text-anchor="middle">SearchService</text>
+          <rect x="360" y="20" width="120" height="36" rx="6" fill="#fef3c7" stroke="#f59e0b"/><text x="420" y="42" text-anchor="middle">LLMService</text>
+          <rect x="520" y="20" width="160" height="36" rx="6" fill="#f3e8ff" stroke="#9333ea"/><text x="600" y="42" text-anchor="middle">Ollama (host)</text>
+        </g>
+        <g stroke="#cbd5e1" stroke-width="1" stroke-dasharray="4 4">
+          <line x1="100" y1="60" x2="100" y2="260"/>
+          <line x1="260" y1="60" x2="260" y2="260"/>
+          <line x1="420" y1="60" x2="420" y2="260"/>
+          <line x1="600" y1="60" x2="600" y2="260"/>
+        </g>
+        <g font-family="-apple-system, sans-serif" font-size="11" fill="#0f172a">
+          <line x1="100" y1="100" x2="255" y2="100" stroke="#1e40af" stroke-width="1.5" marker-end="url(#arr4)"/>
+          <text x="110" y="93">1. search(...)</text>
+
+          <line x1="260" y1="140" x2="415" y2="140" stroke="#1e40af" stroke-width="1.5" marker-end="url(#arr4)"/>
+          <text x="270" y="133">2. generate_sql(...)</text>
+
+          <line x1="420" y1="180" x2="595" y2="180" stroke="#1e40af" stroke-width="1.5" marker-end="url(#arr4)"/>
+          <text x="430" y="173">3. POST /api/generate · timeout=15s</text>
+
+          <line x1="600" y1="220" x2="425" y2="220" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arr4)"/>
+          <text x="430" y="213">4. TimeoutException · NO response</text>
+
+          <line x1="420" y1="250" x2="105" y2="250" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arr4)"/>
+          <text x="115" y="243">5. raise LLMTimeoutError → HTTP 422 LLM_TIMEOUT</text>
+        </g>
+      </svg>
+    </div>
+
+    <div class="card">
+      <h2>Capas de defensa contra inyección</h2>
+
+      <svg class="diagram" viewBox="0 0 980 540" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Defense in depth flow">
+        <defs>
+          <marker id="arr5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+          </marker>
+        </defs>
+        <g font-family="-apple-system, sans-serif" font-size="13">
+          <!-- Step boxes vertical -->
+          <rect x="320" y="20"  width="340" height="48" rx="8" fill="#dbeafe" stroke="#2563eb"/>
+          <text x="490" y="40" text-anchor="middle" font-weight="600">Input usuario (NL)</text>
+          <text x="490" y="58" text-anchor="middle" fill="#475569" font-size="11">"Busco casas..."</text>
+
+          <rect x="320" y="100" width="340" height="56" rx="8" fill="#fef3c7" stroke="#f59e0b"/>
+          <text x="490" y="122" text-anchor="middle" font-weight="600">1) Sanitización</text>
+          <text x="490" y="142" text-anchor="middle" fill="#475569" font-size="11">trim · len≤500 · reject control chars</text>
+
+          <rect x="320" y="190" width="340" height="56" rx="8" fill="#fef3c7" stroke="#f59e0b"/>
+          <text x="490" y="212" text-anchor="middle" font-weight="600">2) Prompt al LLM</text>
+          <text x="490" y="232" text-anchor="middle" fill="#475569" font-size="11">schema + few-shot · temp=0.0 · timeout 15s</text>
+
+          <rect x="320" y="280" width="340" height="56" rx="8" fill="#fef3c7" stroke="#f59e0b"/>
+          <text x="490" y="302" text-anchor="middle" font-weight="600">3) Post-procesado del output</text>
+          <text x="490" y="322" text-anchor="middle" fill="#475569" font-size="11">strip ``` · tomar primer ;</text>
+
+          <rect x="320" y="370" width="340" height="56" rx="8" fill="#fef3c7" stroke="#f59e0b"/>
+          <text x="490" y="392" text-anchor="middle" font-weight="600">4) sqlglot AST + whitelist</text>
+          <text x="490" y="412" text-anchor="middle" fill="#475569" font-size="11">SELECT-only · tabla=propiedades · sin SLEEP/LOAD_FILE</text>
+
+          <rect x="320" y="460" width="340" height="56" rx="8" fill="#dcfce7" stroke="#16a34a"/>
+          <text x="490" y="482" text-anchor="middle" font-weight="600">5) Ejecutar (RO user opcional)</text>
+          <text x="490" y="502" text-anchor="middle" fill="#475569" font-size="11">200 SearchResponse</text>
+
+          <!-- Error branches -->
+          <rect x="700" y="100" width="240" height="42" rx="6" fill="#fef2f2" stroke="#dc2626"/>
+          <text x="820" y="125" text-anchor="middle" fill="#dc2626" font-weight="600">400 EMPTY_QUERY</text>
+
+          <rect x="700" y="280" width="240" height="42" rx="6" fill="#fef2f2" stroke="#dc2626"/>
+          <text x="820" y="305" text-anchor="middle" fill="#dc2626" font-weight="600">422 LLM_INVALID_OUTPUT</text>
+
+          <rect x="700" y="370" width="240" height="42" rx="6" fill="#fef2f2" stroke="#dc2626"/>
+          <text x="820" y="389" text-anchor="middle" fill="#dc2626" font-weight="600">422 SQL_NOT_SELECT</text>
+          <text x="820" y="403" text-anchor="middle" fill="#dc2626" font-size="10">SQL_FORBIDDEN_TABLE / DANGEROUS_FUNCTION</text>
+
+          <rect x="700" y="460" width="240" height="42" rx="6" fill="#fef2f2" stroke="#dc2626"/>
+          <text x="820" y="485" text-anchor="middle" fill="#dc2626" font-weight="600">500 DB_ERROR</text>
+
+          <!-- Vertical OK arrows -->
+          <g stroke="#475569" stroke-width="1.5" fill="none" marker-end="url(#arr5)">
+            <line x1="490" y1="68"  x2="490" y2="98"/>
+            <line x1="490" y1="156" x2="490" y2="188"/>
+            <line x1="490" y1="246" x2="490" y2="278"/>
+            <line x1="490" y1="336" x2="490" y2="368"/>
+            <line x1="490" y1="426" x2="490" y2="458"/>
+          </g>
+
+          <!-- Branches to errors -->
+          <g stroke="#dc2626" stroke-width="1.2" stroke-dasharray="4 3" fill="none" marker-end="url(#arr5)">
+            <line x1="660" y1="128" x2="700" y2="121"/>
+            <line x1="660" y1="308" x2="700" y2="301"/>
+            <line x1="660" y1="398" x2="700" y2="391"/>
+            <line x1="660" y1="488" x2="700" y2="481"/>
+          </g>
+        </g>
+      </svg>
+    </div>
+  </div>
+</body>
+</html>
