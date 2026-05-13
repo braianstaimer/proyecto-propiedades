@@ -109,6 +109,77 @@ Detalle completo en [`backend-developer/README.md`](./backend-developer/README.m
 
 ---
 
+## 🐍 Backend (`backend/`)
+
+| Recurso | URL | Cómo levantarlo |
+|---|---|---|
+| **API base** | http://localhost:8000 | Incluido en el stack del compose root |
+| **Swagger UI** | http://localhost:8000/docs | Incluido en el stack |
+| **ReDoc** | http://localhost:8000/redoc | Incluido en el stack |
+| **OpenAPI 3.1 spec** | http://localhost:8000/openapi.json | Incluido en el stack |
+| **Health check** | http://localhost:8000/api/health | Incluido en el stack |
+
+FastAPI 0.115 (Python 3.12) — endpoint `POST /api/search` que traduce consultas NL a SQL via Ollama, valida con `sqlglot` AST + whitelist y ejecuta sobre la tabla `propiedades`. Cobertura **96%**, **187 tests verdes**.
+
+Para dev nativo (hot reload):
+
+```bash
+docker compose up -d mysql        # solo la DB
+cd backend
+python3.12 -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+DB_HOST=localhost uvicorn app.main:app --reload --port 8000
+```
+
+**Endpoints:**
+
+| Método | Path | Descripción |
+|---|---|---|
+| POST | `/api/search` | Traduce NL → SQL → resultados |
+| GET | `/api/health` | Estado DB + LLM |
+| GET | `/docs` | Swagger UI |
+| GET | `/redoc` | ReDoc |
+| GET | `/openapi.json` | Spec OpenAPI 3.1 |
+
+Detalle completo en [`backend/README.md`](./backend/README.md).
+
+---
+
+## 🎨 Frontend (`frontend/`)
+
+| Recurso | URL | Cómo levantarlo |
+|---|---|---|
+| **UI Vue (producción nginx)** | http://localhost:8080 | Incluido en el stack del compose root |
+| **UI Vue (Vite HMR dev)** | http://localhost:5173 | `cd frontend && npm install && npm run dev` |
+
+Vue 3.5 (Composition API) + TypeScript + Vite + Pinia + Tailwind 3. SPA con grid responsive, estados loading/error/empty y toggle "Mostrar SQL generado". Cobertura **91%**, **26 tests verdes**.
+
+Para dev nativo con HMR:
+
+```bash
+cd frontend
+npm install
+echo "VITE_API_BASE_URL=http://localhost:8000" > .env.local
+npm run dev                       # http://localhost:5173
+```
+
+**Componentes:**
+
+| Componente | Rol |
+|---|---|
+| `SearchBar.vue` | Input con placeholder rotativo + botón Buscar |
+| `PropertyCard.vue` | Card individual con chips (tipo, hab, baños, m²) |
+| `PropertyGrid.vue` | Grid responsive (3/2/1 cols) |
+| `EmptyState.vue` | Sin resultados con sugerencia útil |
+| `ErrorAlert.vue` | Banda dismissible con `error.code` humanizado |
+| `LoadingSpinner.vue` | SkeletonCards animadas |
+| `SqlPreview.vue` | Bloque `<pre>` con el SQL generado (toggle) |
+| `AppHeader.vue` | Header con toggle SQL |
+
+Detalle completo en [`frontend/README.md`](./frontend/README.md).
+
+---
+
 ## 📁 Estructura
 
 ```
@@ -204,17 +275,13 @@ proyecto-propiedades/
 
 ---
 
-## 📡 Endpoints API
+## 📡 Catálogo de errores API
 
-| Método | Path | Descripción |
-|---|---|---|
-| POST | `/api/search` | Traduce NL → SQL → resultados |
-| GET | `/api/health` | Estado DB + LLM |
-| GET | `/docs` | Swagger UI |
-| GET | `/redoc` | ReDoc |
-| GET | `/openapi.json` | Spec OpenAPI 3.1 |
+Envelope:
 
-Catálogo de errores tipados:
+```json
+{ "error": { "code": "...", "message": "...", "detail": null, "request_id": "..." } }
+```
 
 | HTTP | `error.code` |
 |---|---|
@@ -223,13 +290,7 @@ Catálogo de errores tipados:
 | 500 | `DB_ERROR` |
 | 503 | `LLM_UNAVAILABLE` |
 
-Envelope:
-
-```json
-{ "error": { "code": "...", "message": "...", "detail": null, "request_id": "..." } }
-```
-
-Detalle en [Developer site → `/architecture/error-codes`](http://localhost:3001/architecture/error-codes).
+Detalle por código en [Developer site → `/architecture/error-codes`](http://localhost:3001/architecture/error-codes).
 
 ---
 
@@ -289,27 +350,15 @@ npm run typecheck           # vue-tsc --noEmit
 
 ---
 
-## 🛠 Dev nativo (sin Docker para backend/frontend)
+## 🛠 Dev nativo
+
+Las secciones [🐍 Backend](#-backend-backend), [🎨 Frontend](#-frontend-frontend) y [📚 Documentación](#-documentación) tienen sus comandos individuales. Pipeline típico:
 
 ```bash
-# Sólo MySQL (vía docker)
-docker compose up -d mysql
-
-# Backend con hot-reload
-cd backend
-python3.12 -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
-DB_HOST=localhost uvicorn app.main:app --reload --port 8000
-
-# Frontend con Vite HMR
-cd ../frontend
-npm install
-echo "VITE_API_BASE_URL=http://localhost:8000" > .env.local
-npm run dev                       # http://localhost:5173
-
-# (opcional) Developer site
-cd ../backend-developer
-npm install && npm start          # http://localhost:3001
+docker compose up -d mysql        # 1. sólo DB
+cd backend && uvicorn app.main:app --reload --port 8000   # 2. backend nativo
+cd ../frontend && npm run dev                              # 3. frontend Vite
+cd ../backend-developer && npm start                       # 4. (opcional) docs
 ```
 
 READMEs por subproyecto para detalle:
