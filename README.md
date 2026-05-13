@@ -196,7 +196,7 @@ Es **idempotente**: una segunda corrida con el mismo `--limit` reporta `skipped_
 | **UI Vue (producción nginx)** | http://localhost:8080 | Incluido en el stack del compose root |
 | **UI Vue (Vite HMR dev)** | http://localhost:5173 | `cd frontend && npm install && npm run dev` |
 
-Vue 3.5 (Composition API) + TypeScript + Vite + Pinia + Tailwind 3. SPA con grid responsive, estados loading/error/empty y toggle "Mostrar SQL generado". Cobertura **91%**, **26 tests verdes**.
+Vue 3.5 (Composition API) + TypeScript + Vite + Pinia + Tailwind 3. SPA con grid responsive, estados loading/error/empty y toggle "Mostrar SQL generado". Cobertura **94%**, **38 tests verdes**.
 
 Para dev nativo con HMR:
 
@@ -314,8 +314,8 @@ proyecto-propiedades/
 | BD | MySQL 8.0 |
 | Orquestación | Docker Compose v2 (baseline PDF + override opcional) |
 | Docs site (bonus) | Docusaurus 3.8 + `@scalar/docusaurus` |
-| Tests backend | pytest + pytest-asyncio + httpx-mock (151 tests) |
-| Tests frontend | vitest + happy-dom + @vue/test-utils (26 tests) |
+| Tests backend | pytest + pytest-asyncio + httpx-mock (187 tests) |
+| Tests frontend | vitest + happy-dom + @vue/test-utils (38 tests) |
 
 ---
 
@@ -385,8 +385,8 @@ npm run typecheck           # vue-tsc --noEmit
 | Backend tests | — | **187 verdes** |
 | Backend coverage global | ≥ 80% | **96%** ✓ |
 | Backend coverage `sql_validator` | ≥ 95% | **97%** ✓ |
-| Frontend tests | — | **26 verdes** |
-| Frontend coverage | — | **91%** |
+| Frontend tests | — | **38 verdes** |
+| Frontend coverage | — | **94%** |
 | Cold-start `docker compose up -d --build` (4 servicios) | ≤ 90s | **~30s** ✓ |
 | p50 `/api/search` | ≤ 8s | **~1.5s** (caliente) ✓ |
 | Las 6 búsquedas PDF retornan ≥ 1 | 6/6 | **6/6** ✓ |

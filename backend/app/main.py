@@ -11,8 +11,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_redoc_html
 from fastapi.responses import HTMLResponse, JSONResponse
 
-REDOC_JS_URL = "https://cdn.jsdelivr.net/npm/redoc@2.5.0/bundles/redoc.standalone.js"
-
 from app import __version__
 from app.config import get_settings
 from app.database import build_datasource
@@ -24,6 +22,8 @@ from app.schemas import ErrorDetail, ErrorResponse
 from app.search_service import SearchService
 from app.sql_validator import SQLValidator
 from persistencia.runner import run_migrations_if_needed
+
+REDOC_JS_URL = "https://cdn.jsdelivr.net/npm/redoc@2.5.0/bundles/redoc.standalone.js"
 
 logger = logging.getLogger("proyecto-propiedades")
 
