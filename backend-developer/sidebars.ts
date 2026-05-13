@@ -11,7 +11,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Arquitectura',
-      items: ['architecture/error-codes'],
+      items: ['architecture/diagrams', 'architecture/error-codes'],
     },
     {
       type: 'category',

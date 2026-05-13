@@ -65,9 +65,10 @@ const config: Config = {
           position: 'left',
           label: 'Guías',
         },
-        { to: '/api-reference', label: 'API Reference', position: 'left' },
+        // El plugin @scalar/docusaurus ya inyecta "API Reference" automáticamente
+        // con su `label`, no agregarlo aquí o aparece dos veces.
         {
-          href: 'https://github.com/braianstaimer/proyecto-propiedades-backend',
+          href: 'https://github.com/braianstaimer/proyecto-propiedades',
           label: 'GitHub',
           position: 'right',
         },
@@ -81,15 +82,14 @@ const config: Config = {
           items: [
             { label: 'Quickstart', to: '/intro' },
             { label: 'Flujo de búsqueda', to: '/flows/search-flow' },
+            { label: 'Diagramas (UML, ER, deploy)', to: '/architecture/diagrams' },
             { label: 'Catálogo de errores', to: '/architecture/error-codes' },
           ],
         },
         {
-          title: 'Repositorios',
+          title: 'Repositorio',
           items: [
-            { label: 'Backend', href: 'https://github.com/braianstaimer/proyecto-propiedades-backend' },
-            { label: 'Frontend', href: 'https://github.com/braianstaimer/proyecto-propiedades-frontend' },
-            { label: 'Esta documentación', href: 'https://github.com/braianstaimer/proyecto-propiedades-backend-developer' },
+            { label: 'proyecto-propiedades', href: 'https://github.com/braianstaimer/proyecto-propiedades' },
           ],
         },
       ],

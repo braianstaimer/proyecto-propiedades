@@ -1,0 +1,89 @@
+---
+sidebar_position: 1
+title: Diagramas
+---
+
+# Diagramas de arquitectura
+
+Cinco diagramas en **HTML + SVG puro** — sin Mermaid, sin CDN, sin dependencias externas. Cada uno es un archivo `.html` autosuficiente que abre offline. Servidos por el mismo nginx que esta docs site.
+
+> **Cómo regenerarlos:** los archivos viven en `backend-developer/static/diagrams/` (copiados desde el workspace `assessments/diagrams/`). Editar los `<rect>`/`<line>`/`<text>` directos del SVG y commitear.
+
+export const DiagramFrame = ({src, height = 720, title}) => (
+  <div style={{
+    border: '1px solid var(--ifm-color-emphasis-300)',
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginBottom: '1.5rem',
+    background: '#fff',
+  }}>
+    <iframe
+      src={src}
+      title={title}
+      style={{ width: '100%', height, border: 0, display: 'block' }}
+      loading="lazy"
+    />
+    <div style={{
+      padding: '8px 12px',
+      borderTop: '1px solid var(--ifm-color-emphasis-200)',
+      fontSize: 13,
+      display: 'flex',
+      justifyContent: 'space-between',
+      background: 'var(--ifm-color-emphasis-100)',
+    }}>
+      <span>{title}</span>
+      <a href={src} target="_blank" rel="noreferrer">Abrir en pestaña nueva ↗</a>
+    </div>
+  </div>
+)
+
+## 1. Casos de uso (UML)
+
+Actores, casos de uso del endpoint `POST /api/search` y errores manejados por categoría.
+
+<DiagramFrame src="/diagrams/use-cases.html" title="Use cases UML" />
+
+---
+
+## 2. Secuencia · happy path + caminos de error
+
+Sequence diagram del pipeline `NL → SQL → resultados` con sus dos caminos de excepción y el flowchart de defensa en profundidad.
+
+<DiagramFrame src="/diagrams/sequence-search.html" title="Sequence diagram + error paths" height={840} />
+
+---
+
+## 3. Arquitectura de componentes
+
+Capas del backend (routes → service → repo → DB), patrones aplicados (Repository, Adapter, Strategy, Factory) y flujo de datos del frontend Vue.
+
+<DiagramFrame src="/diagrams/component-architecture.html" title="Component architecture" height={820} />
+
+---
+
+## 4. Esquema de base de datos (ER)
+
+Tabla `propiedades` con sus 9 columnas, 6 índices defensivos, 4 CHECK constraints y el modelo de seguridad de doble usuario (`appuser` + `appuser_ro`).
+
+<DiagramFrame src="/diagrams/db-schema.html" title="DB schema · ER + constraints + grants" height={780} />
+
+---
+
+## 5. Deployment topology
+
+Topología Docker Compose (4 contenedores) + Ollama en host, secuencia de arranque, healthchecks y volúmenes.
+
+<DiagramFrame src="/diagrams/deployment.html" title="Deployment topology" />
+
+---
+
+## Índice rápido
+
+Si prefiere abrir los diagramas en sus propias pestañas:
+
+- [Use cases UML](/diagrams/use-cases.html)
+- [Sequence diagram](/diagrams/sequence-search.html)
+- [Component architecture](/diagrams/component-architecture.html)
+- [DB schema](/diagrams/db-schema.html)
+- [Deployment](/diagrams/deployment.html)
+- [Landing con todos los diagramas](/diagrams/index.html)
