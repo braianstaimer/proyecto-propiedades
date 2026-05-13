@@ -48,6 +48,10 @@ class Settings(BaseSettings):
     MAX_SQL_LIMIT: int = 200
     DEFAULT_SQL_LIMIT: int = 50
     MIN_SEED_ROWS: int = 15
+    # Cache de consultas (LRU en memoria). 0 desactiva el cache.
+    # Caches el par sanitized_query → ValidatedSQL para evitar la llamada al
+    # LLM en consultas repetidas. La DB se consulta siempre (datos frescos).
+    QUERY_CACHE_SIZE: int = 256
 
     def mysql_dsn(self) -> str:
         return (

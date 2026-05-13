@@ -176,10 +176,41 @@ El LLM discrimina correctamente: emite MATCH solo cuando hay texto libre real, y
 
 ---
 
+## ⚡ Cache de consultas (LRU en memoria)
+
+Implementación en `app/query_cache.py`. Cachea el par **`sanitized_query → ValidatedSQL`** — es decir, el resultado de la etapa cara del pipeline (LLM + validator, ≈1 s p50). La DB **siempre se consulta**, así que los resultados nunca son stale.
+
+| Comportamiento | Detalle |
+|---|---|
+| Estrategia | LRU con `OrderedDict.move_to_end` en cada hit |
+| Key | `sanitized_query` (post-NFKC, trim, anti-injection) |
+| Value | `ValidatedSQL` (frozen dataclass — inmutable, safe) |
+| Almacenamiento | In-process; se vacía al reiniciar el container |
+| Tamaño | `QUERY_CACHE_SIZE` (default `256`; `0` desactiva) |
+| Errores | Si LLM o validator fallan tras el retry, **no se cachea** |
+| Concurrencia | `threading.Lock` defensivo (FastAPI tiene un solo event loop por worker) |
+| Métricas | `cache.stats.hits / misses / evictions` (vía `service.cache`) |
+
+### Por qué *este* nivel y no otro
+
+| Nivel | Datos frescos | Ahorra LLM | Ahorra DB |
+|---|---|---|---|
+| Sin cache | ✓ | ✗ | ✗ |
+| **Cache `query → ValidatedSQL`** *(este)* | ✓ | ✓ (1 s) | ✗ |
+| Cache `query → SearchResponse` | ✗ (TTL stale) | ✓ | ✓ (5 ms) |
+
+El cuello de botella es Ollama (~1 s caliente vs ~5 ms del SELECT). Cachear sólo el SQL validado da el 99% del speedup sin servir filas viejas — importante porque el scraper puede insertar entre dos requests idénticas del usuario.
+
+### Tests
+
+`tests/unit/test_query_cache.py` (9 tests) cubre put/get, eviction LRU, promoción de recency, disabled mode, clear. `tests/unit/test_search_service.py` agrega 7 tests de integración con `SearchService`: hit/miss, retry exitoso cacheado, fallo no cacheado, inyección explícita de cache, `QUERY_CACHE_SIZE=0` desactiva todo.
+
+---
+
 ## 🧪 Tests
 
 ```bash
-pytest                                  # 138 tests
+pytest                                  # 184 sin MySQL · 202 con `docker compose up -d mysql`
 pytest --cov=app                        # cobertura 96% global, 97% sql_validator
 ruff check app/                         # lint
 mypy app/ persistencia/                 # types
@@ -188,10 +219,11 @@ lizard app/ persistencia/ --CCN 10 -L 30 # complexity
 
 | Test layer | Files | Count |
 |---|---|---|
-| Unit | `tests/unit/test_*.py` (7 archivos) | 96 |
-| Integration | `tests/integration/test_*.py` (3 archivos) | 25 |
-| Contract | `tests/contract/test_*.py` (3 archivos) | 17 |
-| **Total** | | **138** |
+| Unit | `tests/unit/test_*.py` (9 archivos) | 162 |
+| Integration | `tests/integration/test_*.py` (3 archivos · requiere MySQL) | 18 |
+| Contract | `tests/contract/test_*.py` (3 archivos) | 9 |
+| Smoke | `tests/smoke/test_smoke.py` | 13 |
+| **Total** | | **202** |
 
 ---
 
@@ -211,6 +243,7 @@ Definidas en `proyecto-propiedades/.env.example` (root). El compose root inyecta
 | `MOCK_LLM` | `false` | Rollback a SQL canned |
 | `LOG_LEVEL` | `INFO` | DEBUG/INFO/WARNING/ERROR |
 | `CORS_ORIGINS` | `["http://localhost:8080","http://localhost:5173"]` | Allow-list |
+| `QUERY_CACHE_SIZE` | `256` | LRU `sanitized_query → ValidatedSQL`. `0` desactiva. |
 
 ---
 

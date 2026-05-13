@@ -13,6 +13,7 @@ from app.exceptions import (
 )
 from app.llm_service import LLMProvider
 from app.prompts import COLUMN_LIST
+from app.query_cache import QueryCache
 from app.repositories import InMemoryPropertyRepository, PropertyRepository, PropertyRow
 from app.search_service import SearchService
 from app.sql_validator import SQLValidator, ValidatedSQL
@@ -184,3 +185,89 @@ async def test_invalid_output_then_recover() -> None:
     service = _service(cast(LLMProvider, llm))
     response = await service.search("test")
     assert response.count == 1
+
+
+@pytest.mark.asyncio
+async def test_repeated_query_uses_cache_and_skips_llm() -> None:
+    """Misma consulta → 1 sola llamada al LLM, 2 hits a la DB."""
+    llm = FakeLLM(f"SELECT {COLUMN_LIST} FROM propiedades LIMIT 1")
+    service = _service(cast(LLMProvider, llm))
+    await service.search("Casas en zona 10")
+    await service.search("Casas en zona 10")
+    assert len(llm.calls) == 1
+    assert service.cache.stats.hits == 1
+    assert service.cache.stats.misses == 1
+
+
+@pytest.mark.asyncio
+async def test_different_queries_each_hit_llm() -> None:
+    llm = FakeLLM(
+        f"SELECT {COLUMN_LIST} FROM propiedades LIMIT 1",
+        f"SELECT {COLUMN_LIST} FROM propiedades LIMIT 2",
+    )
+    service = _service(cast(LLMProvider, llm))
+    await service.search("Casas en zona 10")
+    await service.search("Departamentos baratos")
+    assert len(llm.calls) == 2
+    assert service.cache.stats.misses == 2
+    assert service.cache.stats.hits == 0
+
+
+@pytest.mark.asyncio
+async def test_disabled_cache_calls_llm_on_every_request() -> None:
+    llm = FakeLLM(
+        f"SELECT {COLUMN_LIST} FROM propiedades LIMIT 1",
+        f"SELECT {COLUMN_LIST} FROM propiedades LIMIT 1",
+    )
+    service = SearchService(
+        llm=cast(LLMProvider, llm),
+        validator=SQLValidator(allowed_tables={"propiedades"}),
+        repo=InMemoryPropertyRepository([SAMPLE_ROW]),
+        settings=_settings(QUERY_CACHE_SIZE=0),
+    )
+    await service.search("misma consulta")
+    await service.search("misma consulta")
+    assert len(llm.calls) == 2
+    assert service.cache.enabled is False
+
+
+@pytest.mark.asyncio
+async def test_cache_not_populated_on_validation_failure() -> None:
+    """Si validator + retry fallan, el cache no almacena nada (error path)."""
+    llm = FakeLLM("DROP TABLE propiedades", "ALSO INVALID")
+    service = _service(cast(LLMProvider, llm))
+    with pytest.raises(DomainError):
+        await service.search("malicious")
+    assert len(service.cache) == 0
+
+
+@pytest.mark.asyncio
+async def test_cache_stores_successful_retry_outcome() -> None:
+    """Si el LLM falla primero y el retry sale OK, el resultado retry queda cacheado."""
+    llm = FakeLLM(
+        "DROP TABLE propiedades",
+        f"SELECT {COLUMN_LIST} FROM propiedades LIMIT 1",
+        # Si volviera a buscar este query, debería tomar del cache (no consumir más responses).
+    )
+    service = _service(cast(LLMProvider, llm))
+    await service.search("query con retry")
+    await service.search("query con retry")
+    # 2 calls del primer search (raw + retry), 0 del segundo (cache hit)
+    assert len(llm.calls) == 2
+    assert service.cache.stats.hits == 1
+
+
+@pytest.mark.asyncio
+async def test_explicit_cache_injection_overrides_settings() -> None:
+    custom_cache = QueryCache(max_size=8)
+    llm = FakeLLM(f"SELECT {COLUMN_LIST} FROM propiedades LIMIT 1")
+    service = SearchService(
+        llm=cast(LLMProvider, llm),
+        validator=SQLValidator(allowed_tables={"propiedades"}),
+        repo=InMemoryPropertyRepository([SAMPLE_ROW]),
+        settings=_settings(QUERY_CACHE_SIZE=0),  # settings dice "off"
+        cache=custom_cache,  # pero pasamos uno explícito
+    )
+    await service.search("test")
+    assert service.cache is custom_cache
+    assert len(custom_cache) == 1

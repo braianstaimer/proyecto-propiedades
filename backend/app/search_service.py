@@ -11,9 +11,10 @@ from app.exceptions import (
     LLMInvalidOutputError,
 )
 from app.llm_service import LLMProvider
+from app.query_cache import QueryCache
 from app.repositories import PropertyRepository, PropertyRow
 from app.schemas import PropertyOut, SearchResponse
-from app.sql_validator import SQLValidator
+from app.sql_validator import SQLValidator, ValidatedSQL
 
 CONTROL_CHARS_PATTERN = "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x0b\x0c\x0e\x0f"
 
@@ -55,12 +56,20 @@ class SearchService:
         validator: SQLValidator,
         repo: PropertyRepository,
         settings: Settings,
+        cache: QueryCache | None = None,
     ) -> None:
         self._llm = llm
         self._validator = validator
         self._repo = repo
         self._max_query_length = settings.MAX_QUERY_LENGTH
         self._llm_timeout = settings.OLLAMA_TIMEOUT_SECONDS
+        # `if cache is not None` (no `or`): un cache vacío tiene `len() == 0`
+        # y por tanto bool falsy, lo que ocultaría la inyección explícita.
+        self._cache = cache if cache is not None else QueryCache(max_size=settings.QUERY_CACHE_SIZE)
+
+    @property
+    def cache(self) -> QueryCache:
+        return self._cache
 
     async def search(self, query: str) -> SearchResponse:
         start = time.perf_counter()
@@ -101,14 +110,19 @@ class SearchService:
                 raise EmptyQueryError("query contiene contenido no permitido")
         return trimmed
 
-    async def _generate_and_validate(self, sanitized_query: str):
+    async def _generate_and_validate(self, sanitized_query: str) -> ValidatedSQL:
+        cached = self._cache.get(sanitized_query)
+        if cached is not None:
+            return cached
         raw_sql = await self._llm.generate_sql(sanitized_query, timeout_seconds=self._llm_timeout)
         try:
-            return self._validator.validate(raw_sql)
+            validated = self._validator.validate(raw_sql)
         except DomainError as initial_error:
-            return await self._retry_once(sanitized_query, initial_error)
+            validated = await self._retry_once(sanitized_query, initial_error)
+        self._cache.put(sanitized_query, validated)
+        return validated
 
-    async def _retry_once(self, sanitized_query: str, initial_error: DomainError):
+    async def _retry_once(self, sanitized_query: str, initial_error: DomainError) -> ValidatedSQL:
         # IMPORTANTE: NO concatenamos `initial_error.code` al sanitized_query
         # antes de enviarlo al LLM. Esa concatenación reabriría el canal de
         # prompt-injection: el user_query del atacante volvería a viajar como
