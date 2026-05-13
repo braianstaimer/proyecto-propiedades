@@ -105,7 +105,8 @@ class InMemoryPropertyRepository(PropertyRepository):
         self._rows = list(rows)
 
     async def execute_validated_select(
-        self, validated_sql: ValidatedSQL
+        self,
+        validated_sql: ValidatedSQL,  # noqa: ARG002 — requerido por ABC; mock ignora el SQL
     ) -> Sequence[PropertyRow]:
         return list(self._rows)
 

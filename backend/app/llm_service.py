@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import re
 from typing import Protocol, runtime_checkable
 
@@ -8,6 +9,8 @@ import httpx
 from app.config import Settings
 from app.exceptions import LLMInvalidOutputError, LLMTimeoutError, LLMUnavailableError
 from app.prompts import COLUMN_LIST, PromptBuilder
+
+logger = logging.getLogger(__name__)
 
 
 @runtime_checkable
@@ -62,7 +65,8 @@ class OllamaLLMProvider:
         try:
             r = await self._client.get(f"{self._base_url}/api/tags", timeout=5)
             return r.status_code == 200
-        except Exception:
+        except (httpx.HTTPError, OSError) as exc:
+            logger.warning("llm.healthcheck.failed", exc_info=exc)
             return False
 
     async def close(self) -> None:
@@ -96,7 +100,8 @@ class MockLLMProvider:
     def __init__(self, fixed_response: str | None = None) -> None:
         self._fixed_response = fixed_response
 
-    async def generate_sql(self, nl_query: str, *, timeout_seconds: int) -> str:
+    async def generate_sql(self, nl_query: str, *, timeout_seconds: int) -> str:  # noqa: ARG002
+        # timeout_seconds requerido por LLMProvider Protocol; el mock no hace I/O.
         if self._fixed_response is not None:
             return self._fixed_response
         return self._match(nl_query)

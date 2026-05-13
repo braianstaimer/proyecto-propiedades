@@ -1,15 +1,19 @@
 from __future__ import annotations
 
+import logging
 from abc import ABC, abstractmethod
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from typing import TYPE_CHECKING
 
 from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
 )
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from app.config import Settings
@@ -58,7 +62,8 @@ class MySQLDataSource(DataSource):
             async with self._engine.begin() as conn:
                 await conn.execute(text("SELECT 1"))
             return True
-        except Exception:
+        except (SQLAlchemyError, OSError) as exc:
+            logger.warning("datasource.healthcheck.failed", exc_info=exc)
             return False
 
     async def close(self) -> None:

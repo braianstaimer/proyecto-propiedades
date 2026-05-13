@@ -15,6 +15,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app ./app
 COPY persistencia ./persistencia
+COPY scripts ./scripts
 COPY pyproject.toml ./
 
 EXPOSE 8000

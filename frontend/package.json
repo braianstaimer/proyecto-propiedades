@@ -11,6 +11,7 @@
     "typecheck": "vue-tsc --noEmit",
     "test": "vitest",
     "test:ci": "vitest run --coverage",
+    "test:smoke": "vitest run tests/smoke",
     "gen:types": "openapi-typescript ../backend-developer/static/openapi.json -o src/types/api.ts"
   },
   "dependencies": {

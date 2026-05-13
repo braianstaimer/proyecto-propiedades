@@ -26,13 +26,13 @@ exclude = ["tests/", "venv/"]
 asyncio_mode = "auto"
 testpaths = ["tests"]
 addopts = "-ra -q"
+markers = [
+  "smoke: golden path para release — corre con `pytest -m smoke`",
+]
 
 [tool.coverage.run]
 source = ["app"]
-omit = ["tests/*", "**/__init__.py", "app/models.py"]
-# Nota: app/models.py es un módulo SQLAlchemy declarativo sin lógica.
-# La app accede a `propiedades` vía SQL validado, no via ORM. El módulo se
-# conserva para futura adopción de Alembic.
+omit = ["tests/*", "**/__init__.py"]
 
 [tool.coverage.report]
 exclude_lines = [
