@@ -338,7 +338,7 @@ Comandos versionados para automatizar audits y syncs:
 
 ## 🎬 Video demo
 
-_Pendiente — link al cierre._
+[Video demo](https://youtube.com/watch?v=vD4sIWYdvGc&feature=youtu.be)
 
 ## 📄 License
 
