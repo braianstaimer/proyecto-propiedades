@@ -33,22 +33,66 @@ const iconByTipo: Record<string, string> = {
   oficina: 'M6 4h12v16H6zM10 8h4M10 12h4M10 16h4',
   local: 'M3 9 5 4h14l2 5M3 9v11h18V9M9 14h6',
 }
+
+const tipoLabelMap: Record<string, string> = {
+  casa: 'Casa',
+  departamento: 'Departamento',
+  terreno: 'Terreno',
+  oficina: 'Oficina',
+  local: 'Local',
+}
+
+const tipoLabel = computed(
+  () => tipoLabelMap[props.property.tipo] ?? props.property.tipo,
+)
 </script>
 
 <template>
-  <article class="card flex flex-col">
+  <article class="card prop-card flex flex-col">
     <div
-      class="aspect-[16/10] bg-gradient-to-br flex items-center justify-center"
+      class="aspect-[16/10] bg-gradient-to-br flex items-center justify-center relative"
       :class="gradientByTipo[property.tipo] ?? 'from-neutral-100 to-neutral-200'"
     >
-      <svg class="w-16 h-16 text-white/90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <span
+        class="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/92 backdrop-blur-sm text-[11px] font-semibold text-neutral-800 shadow-sm"
+      >
+        <svg
+          class="w-3 h-3 text-neutral-500"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path :d="iconByTipo[property.tipo]" />
+        </svg>
+        {{ tipoLabel }}
+      </span>
+      <svg
+        class="w-16 h-16 text-white/90"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
         <path :d="iconByTipo[property.tipo]" />
       </svg>
     </div>
     <div class="p-5 flex flex-col gap-3 flex-1">
       <header class="flex items-start justify-between gap-3">
-        <h3 class="text-h2 leading-tight text-neutral-900">{{ property.titulo }}</h3>
-        <p class="text-h2 text-primary-700 whitespace-nowrap font-semibold">{{ formattedPrice }}</p>
+        <h3 class="text-h2 font-semibold leading-tight tracking-tight text-neutral-900">
+          {{ property.titulo }}
+        </h3>
+        <p
+          class="text-h2 text-primary-700 whitespace-nowrap font-semibold tabular-nums tracking-tight"
+        >
+          {{ formattedPrice }}
+        </p>
       </header>
       <p v-if="property.descripcion" class="text-body text-neutral-600 line-clamp-2">
         {{ property.descripcion }}
@@ -61,7 +105,6 @@ const iconByTipo: Record<string, string> = {
         {{ property.ubicacion }}
       </p>
       <div class="flex flex-wrap gap-2 mt-auto pt-2">
-        <span class="chip capitalize">{{ property.tipo }}</span>
         <span v-if="property.habitaciones !== null" class="chip">
           {{ property.habitaciones }} hab.
         </span>

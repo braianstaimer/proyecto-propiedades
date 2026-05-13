@@ -421,19 +421,19 @@ Objetivo: mantener coverage ≥ 91% (actual: 91.6%).
 
 ## Checklist de entrega
 
-- [ ] `SearchView.vue` reestructurada en hero-band + main
-- [ ] `Eyebrow.vue` creado
-- [ ] `SuggestionChips.vue` creado + handler en SearchView
-- [ ] `ResultBar.vue` creado + reemplaza el counter inline
-- [ ] `PropertyCard.vue` con badge de tipo + hover lift + tipo chip removido
-- [ ] `SqlPreview.vue` con `whitespace-nowrap` en header y timing
-- [ ] `.input-search` con sombra + focus glow en `assets/main.css`
-- [ ] `.suggestion-chip` utility en `assets/main.css`
-- [ ] `.hero-band` + textura en CSS (scoped o global)
-- [ ] Copy del subtitle actualizada
-- [ ] Tests pasando con cobertura ≥ 91%
-- [ ] `npm run typecheck` limpio
-- [ ] `npm run build` sin warnings nuevos
+- [x] `SearchView.vue` reestructurada en hero-band + main
+- [x] `Eyebrow.vue` creado
+- [x] `SuggestionChips.vue` creado + handler en SearchView
+- [x] `ResultBar.vue` creado + reemplaza el counter inline
+- [x] `PropertyCard.vue` con badge de tipo + hover lift + tipo chip removido
+- [x] `SqlPreview.vue` con `whitespace-nowrap` en header y timing
+- [x] `.input-search` con sombra + focus glow en `assets/main.css`
+- [x] `.suggestion-chip` utility en `assets/main.css`
+- [x] `.hero-band` + textura en CSS (scoped o global)
+- [x] Copy del subtitle actualizada
+- [x] Tests pasando con cobertura ≥ 91%
+- [x] `npm run typecheck` limpio
+- [x] `npm run build` sin warnings nuevos
 
 ---
 

@@ -128,6 +128,54 @@ grep -E "import (httpx|aiomysql|sqlalchemy|mysql|ollama)" app/search_service.py
 
 ---
 
+## 🔎 Decisión técnica — Búsqueda híbrida con FULLTEXT
+
+### Motivación
+
+Un LLM de 3B parámetros (`llama3.2:3b`, default del assessment) tiende a copiar literalmente palabras del query del usuario al SQL, ignorando el esquema. Caso real:
+
+- Usuario: `"APARTAMENTO SAN ISIDRO 2021"`
+- LLM (sin FULLTEXT): `WHERE tipo = 'apartamento' AND LOWER(ubicacion) LIKE '%san isidro%'`
+- DB: el row real es `tipo = 'departamento'` (enum canónico). El filtro queda vacío.
+
+Resolverlo en código (post-procesar el SQL, mapear sinónimos en Python, two-pass LLM) rompe la regla "una sola pasada NL→SQL" y agrega complejidad fuera del scope del assessment.
+
+### Implementación
+
+1. **Schema** — índice nativo de MySQL sobre las tres columnas textuales:
+   ```sql
+   FULLTEXT INDEX ft_search (titulo, descripcion, ubicacion)
+   ```
+2. **Prompt** — el LLM aprende dos herramientas y cuándo usar cada una:
+   - **(A) Filtros estructurados** (`=`, `<`, `BETWEEN`, `DATE_SUB`) sobre columnas tipadas: `tipo`, `precio`, `habitaciones`, `banos`, `area_m2`, `fecha_publicacion`.
+   - **(B) FULLTEXT BOOLEAN MODE** sobre texto libre: `MATCH(titulo, descripcion, ubicacion) AGAINST('+t1 +t2 ...' IN BOOLEAN MODE)` + `ORDER BY MATCH(...) DESC` para relevancia.
+
+   Regla de decisión codificada en el prompt: clasifica cada token como `ENUM | ESTRUCTURADO | ZONA | TEXTO_LIBRE` y enruta. Si no hay tokens de texto libre, NO emite MATCH.
+3. **Sinónimos del enum** mapeados en el prompt (no en código): `apartamento|depto|depa|piso|flat → departamento`, `finca|lote|parcela → terreno`, `bodega|comercial → local`.
+4. **Validador** — `sqlglot` parsea `MATCH ... AGAINST ... IN BOOLEAN MODE` nativamente y `MATCH`/`AGAINST` no están en la blocklist. Cero cambios en `sql_validator.py`. La triple defensa anti-injection se preserva intacta.
+
+### Resultados (smoke test post-cambio)
+
+| Query usuario | SQL emitido | Filas |
+|---|---|---|
+| "APARTAMENTO SAN ISIDRO 2021" | solo MATCH | 1 ✓ |
+| "Busco casas de 3 habitaciones en zona 10" | `tipo='casa' AND habitaciones=3 AND MATCH('+"zona 10"')` | 2 ✓ |
+| "Muéstrame departamentos de menos de $150,000" | solo structured, **sin MATCH** | 4 ✓ |
+| ">2 baños y al menos 150 m²" | solo structured, **sin MATCH** | 5 ✓ |
+| "Terrenos entre $50K y $100K" | solo structured, **sin MATCH** | 3 ✓ |
+| "Departamentos con 2 hab en zona 15" | `tipo='departamento' AND habitaciones=2 AND MATCH('+"zona 15"')` | 2 ✓ |
+
+El LLM discrimina correctamente: emite MATCH solo cuando hay texto libre real, y los 6 ejemplos canónicos del assessment (PDF) siguen resolviendo.
+
+### Tradeoffs y límites conocidos
+
+- **`innodb_ft_min_token_size = 3`** (default): tokens de 1-2 caracteres se ignoran. No afecta los queries esperados.
+- **Stopwords default** son inglesas; no chocan con vocabulario inmobiliario en español.
+- **Sin stemming nativo**: `"apartamento"` no matchea `"departamento"` por similitud léxica. Resuelto vía el mapeo de sinónimos del prompt + el hecho de que las filas reales suelen incluir la palabra del usuario en `titulo` o `descripcion`.
+- **Extensión futura**: si aparecen typos o variantes morfológicas frecuentes, cambiar el índice a `WITH PARSER ngram` permite matching sub-token (más recall, más falsos positivos).
+
+---
+
 ## 🧪 Tests
 
 ```bash

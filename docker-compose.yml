@@ -22,6 +22,7 @@ services:
       MYSQL_USER:          ${MYSQL_USER:-appuser}
       MYSQL_PASSWORD:      ${MYSQL_PASSWORD:-apppass}
     volumes:
+      - mysql_data:/var/lib/mysql
       - ./backend/persistencia:/docker-entrypoint-initdb.d
     ports:
       - "3306:3306"
@@ -64,3 +65,19 @@ services:
     container_name: proyecto-propiedades-docs
     ports:
       - "3001:3001"
+
+  phpmyadmin:
+    image: phpmyadmin:5-apache
+    container_name: proyecto-propiedades-phpmyadmin
+    depends_on:
+      - mysql
+    environment:
+      PMA_HOST:     mysql
+      PMA_PORT:     "3306"
+      UPLOAD_LIMIT: 256M
+    ports:
+      - "8081:80"
+
+volumes:
+  mysql_data:
+    name: proyecto-propiedades-mysql-data
