@@ -145,6 +145,50 @@ Detalle completo en [`backend/README.md`](./backend/README.md).
 
 ---
 
+## 🕷 Scripts — `scrape_mapainmueble.py`
+
+Scraper opcional del sitemap de [mapainmueble.com](https://mapainmueble.com/sitemap.xml). Descarga fichas, parsea JSON-LD (`schema.org/RealEstateListing`) y carga filas nuevas en la tabla `propiedades` con dedupe por `UNIQUE (titulo, ubicacion)` + `INSERT IGNORE`. Por defecto **sólo ingiere ventas** (descarta alquileres para no romper los rangos de precio).
+
+**Pre-requisito:** MySQL del proyecto corriendo (`docker compose up -d mysql backend`).
+
+### Uso
+
+```bash
+# Dry-run rápido (5 fichas, no escribe en DB)
+docker compose exec backend python -m scripts.scrape_mapainmueble --dry-run --limit 5
+
+# Primer ingest real (100 propiedades)
+docker compose exec backend python -m scripts.scrape_mapainmueble --limit 100
+
+# Ingest grande con más paralelismo
+docker compose exec backend python -m scripts.scrape_mapainmueble --limit 500 --concurrency 8 --batch-size 100
+
+# Ingest completo del sitemap (~5 000 fichas)
+docker compose exec backend python -m scripts.scrape_mapainmueble --concurrency 8
+
+# Incluir alquileres (default: descartados)
+docker compose exec backend python -m scripts.scrape_mapainmueble --include-alquiler --limit 100
+```
+
+### Flags
+
+| Flag | Default | Descripción |
+|---|---|---|
+| `--limit N` | (todas) | Recorta a las primeras N URLs del sitemap |
+| `--concurrency N` | 6 | Fetchs HTTP simultáneos (≤ 10) |
+| `--batch-size N` | 50 | Filas por `INSERT IGNORE` |
+| `--dry-run` | false | No escribe en MySQL; sólo cuenta |
+| `--include-alquiler` | false | Incluye alquileres (slug pos 1 = `A`) |
+| `--log-level` | INFO | `DEBUG \| INFO \| WARNING \| ERROR` |
+
+### Stats que reporta
+
+`fetched`, `inserted`, `skipped_existing`, `skipped_filtered`, `skipped_fetch_error`, `skipped_parse_error`, `db_insert_ignored`.
+
+Es **idempotente**: una segunda corrida con el mismo `--limit` reporta `skipped_existing ≈ fetched`. Detalle completo en [`backend/scripts/README.md`](./backend/scripts/README.md).
+
+---
+
 ## 🎨 Frontend (`frontend/`)
 
 | Recurso | URL | Cómo levantarlo |
