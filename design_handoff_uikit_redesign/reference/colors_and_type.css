@@ -1,0 +1,168 @@
+/* =================================================================
+ * Proyecto Propiedades — Foundations
+ * Source of truth: frontend/tailwind.config.ts + frontend/src/assets/main.css
+ * ================================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+:root {
+  /* -------- Type families -------- */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* -------- Type scale (Tailwind extension) -------- */
+  --fs-display: 2.25rem;  --lh-display: 2.75rem;  --fw-display: 700;
+  --fs-h1:      1.75rem;  --lh-h1:      2.25rem;  --fw-h1:      600;
+  --fs-h2:      1.375rem; --lh-h2:      1.875rem; --fw-h2:      600;
+  --fs-body:    1rem;     --lh-body:    1.5rem;   --fw-body:    400;
+  --fs-caption: 0.8125rem;--lh-caption: 1.125rem; --fw-caption: 400;
+
+  /* -------- Primary (azul confianza) -------- */
+  --primary-50:  #f0f7ff;
+  --primary-100: #e0eefe;
+  --primary-200: #bcdcfd;
+  --primary-300: #7fbffb;
+  --primary-400: #3a9df6;
+  --primary-500: #1183ed;
+  --primary-600: #0866cb;
+  --primary-700: #0850a3;
+  --primary-800: #0b4585;
+  --primary-900: #0e3a6e;
+  --primary-950: #062148;
+
+  /* -------- Accent (terracota cálido) -------- */
+  --accent-50:  #fdf5f0;
+  --accent-100: #fae6da;
+  --accent-200: #f4c9b1;
+  --accent-300: #eda181;
+  --accent-400: #e57755;
+  --accent-500: #dd5832;
+  --accent-600: #cc4324;
+  --accent-700: #a93420;
+  --accent-800: #882c20;
+  --accent-900: #6e261e;
+
+  /* -------- Neutrals -------- */
+  --neutral-50:  #f9fafb;
+  --neutral-100: #f3f4f6;
+  --neutral-200: #e5e7eb;
+  --neutral-300: #d1d5db;
+  --neutral-400: #9ca3af;
+  --neutral-500: #6b7280;
+  --neutral-600: #4b5563;
+  --neutral-700: #374151;
+  --neutral-800: #1f2937;
+  --neutral-900: #111827;
+
+  /* -------- Semantic (foreground / background / state) -------- */
+  --bg-page:        var(--neutral-50);   /* body */
+  --bg-surface:     #ffffff;             /* cards, header */
+  --bg-muted:       var(--neutral-100);  /* chips, hover */
+  --bg-inverse:     var(--neutral-900);  /* SQL preview */
+
+  --fg-default:     var(--neutral-900);
+  --fg-muted:       var(--neutral-600);
+  --fg-subtle:      var(--neutral-500);
+  --fg-disabled:    var(--neutral-400);
+  --fg-inverse:     #ffffff;
+
+  --border-default: var(--neutral-200);
+  --border-strong:  var(--neutral-300);
+  --border-focus:   var(--primary-500);
+
+  --action-primary:        var(--primary-700);
+  --action-primary-hover:  var(--primary-800);
+  --action-link:           var(--primary-600);
+
+  --feedback-error-bg:     var(--accent-50);
+  --feedback-error-border: var(--accent-500);
+  --feedback-error-fg:     var(--accent-800);
+
+  /* -------- Radii -------- */
+  --radius-sm:  0.375rem;   /* 6px  — buttons secundarios */
+  --radius-md:  0.5rem;     /* 8px  — inputs y badges */
+  --radius-lg:  0.75rem;    /* 12px — alertas */
+  --radius-xl:  0.875rem;   /* 14px — botones primarios, cards, inputs busqueda */
+  --radius-2xl: 1.25rem;    /* 20px — superficies grandes */
+  --radius-pill: 9999px;
+
+  /* -------- Shadows (oklch-tinted on primary-900) -------- */
+  --shadow-card:       0 1px 3px 0 rgb(15 58 110 / 0.08), 0 1px 2px -1px rgb(15 58 110 / 0.06);
+  --shadow-card-hover: 0 10px 25px -5px rgb(15 58 110 / 0.12), 0 8px 10px -6px rgb(15 58 110 / 0.08);
+
+  /* -------- Spacing scale (Tailwind defaults — los 8 más usados en el código) -------- */
+  --space-1: 0.25rem;   /*  4px */
+  --space-2: 0.5rem;    /*  8px */
+  --space-3: 0.75rem;   /* 12px */
+  --space-4: 1rem;      /* 16px */
+  --space-5: 1.25rem;   /* 20px — card padding */
+  --space-6: 1.5rem;    /* 24px — grid gap */
+  --space-8: 2rem;      /* 32px */
+  --space-12: 3rem;     /* 48px */
+
+  /* -------- Layout -------- */
+  --container-max: 72rem; /* max-w-6xl */
+  --container-px-mobile:  1rem;
+  --container-px-tablet:  1.5rem;
+  --container-px-desktop: 2rem;
+
+  /* -------- Motion -------- */
+  --transition-fast: 150ms;
+  --transition-base: 200ms;
+  --easing: cubic-bezier(0.4, 0, 0.2, 1); /* Tailwind default */
+}
+
+/* =================================================================
+ * Semantic typography classes
+ * ================================================================= */
+
+html, body {
+  font-family: var(--font-sans);
+  background: var(--bg-page);
+  color: var(--fg-default);
+  -webkit-font-smoothing: antialiased;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+.t-display {
+  font-size: var(--fs-display);
+  line-height: var(--lh-display);
+  font-weight: var(--fw-display);
+  letter-spacing: -0.01em;
+}
+
+.t-h1 {
+  font-size: var(--fs-h1);
+  line-height: var(--lh-h1);
+  font-weight: var(--fw-h1);
+}
+
+.t-h2 {
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  font-weight: var(--fw-h2);
+}
+
+.t-body {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+.t-caption {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--fg-subtle);
+}
+
+.t-mono {
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+}
+
+/* Focus ring — matches main.css :focus-visible */
+.focus-ring:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--bg-page), 0 0 0 4px var(--primary-500);
+  border-radius: var(--radius-md);
+}
