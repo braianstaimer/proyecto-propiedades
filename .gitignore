@@ -1,0 +1,37 @@
+.env
+.env.local
+*.local
+.DS_Store
+*.log
+
+# Backend
+backend/venv/
+backend/.venv/
+backend/__pycache__/
+backend/.pytest_cache/
+backend/.mypy_cache/
+backend/.ruff_cache/
+backend/.coverage
+backend/htmlcov/
+backend/coverage.xml
+backend/**/__pycache__/
+backend/**/*.pyc
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/coverage/
+frontend/.vite/
+frontend/tsconfig.tsbuildinfo
+frontend/*.tsbuildinfo
+
+# Backend-developer
+backend-developer/node_modules/
+backend-developer/build/
+backend-developer/.docusaurus/
+backend-developer/.cache-loader/
+
+# Editor
+.vscode/
+.idea/
+*.swp

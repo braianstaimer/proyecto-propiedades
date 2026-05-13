@@ -1,0 +1,28 @@
+/**
+ * Custom theme — paleta primary del frontend Vue para coherencia visual.
+ */
+
+:root {
+  --ifm-color-primary: #0866cb;
+  --ifm-color-primary-dark: #0850a3;
+  --ifm-color-primary-darker: #0b4585;
+  --ifm-color-primary-darkest: #062148;
+  --ifm-color-primary-light: #1183ed;
+  --ifm-color-primary-lighter: #3a9df6;
+  --ifm-color-primary-lightest: #7fbffb;
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+  --ifm-font-family-base: Inter, system-ui, -apple-system, sans-serif;
+  --ifm-font-family-monospace: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+[data-theme='dark'] {
+  --ifm-color-primary: #3a9df6;
+  --ifm-color-primary-dark: #1183ed;
+  --ifm-color-primary-darker: #0866cb;
+  --ifm-color-primary-darkest: #0850a3;
+  --ifm-color-primary-light: #7fbffb;
+  --ifm-color-primary-lighter: #bcdcfd;
+  --ifm-color-primary-lightest: #e0eefe;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+}

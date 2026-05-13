@@ -1,0 +1,21 @@
+fastapi==0.115.6
+uvicorn[standard]==0.32.1
+pydantic==2.10.4
+pydantic-settings==2.7.1
+sqlalchemy[asyncio]==2.0.36
+aiomysql==0.2.0
+cryptography==44.0.0
+sqlglot==25.34.1
+httpx==0.28.1
+structlog==24.4.0
+
+# Testing
+pytest==8.3.4
+pytest-asyncio==0.25.0
+pytest-cov==6.0.0
+anyio==4.7.0
+
+# Optional · uncomment to enable
+# slowapi==0.1.9
+# alembic==1.14.0
+# testcontainers[mysql]==4.9.0

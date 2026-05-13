@@ -1,0 +1,54 @@
+# Orquestador root — levanta mysql + backend + frontend.
+# Variables se leen desde .env (copia de .env.example).
+#
+# Uso:
+#   cp .env.example .env
+#   docker compose up -d --build
+#   curl http://localhost:8000/api/health
+#   open http://localhost:8080
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: proyecto-propiedades-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE:      ${MYSQL_DATABASE}
+      MYSQL_USER:          ${MYSQL_USER}
+      MYSQL_PASSWORD:      ${MYSQL_PASSWORD}
+    volumes:
+      - ./backend/persistencia:/docker-entrypoint-initdb.d
+    ports:
+      - "3306:3306"
+
+  backend:
+    build: ./backend
+    container_name: proyecto-propiedades-backend
+    depends_on:
+      - mysql
+    environment:
+      DB_HOST:                 mysql
+      DB_PORT:                 "3306"
+      DB_USER:                 ${MYSQL_USER}
+      DB_PASSWORD:             ${MYSQL_PASSWORD}
+      DB_NAME:                 ${MYSQL_DATABASE}
+      DB_BACKEND:              mysql
+      LLM_BACKEND:             ${LLM_BACKEND}
+      OLLAMA_URL:              ${OLLAMA_URL}
+      OLLAMA_MODEL:            ${OLLAMA_MODEL}
+      OLLAMA_TIMEOUT_SECONDS:  ${OLLAMA_TIMEOUT_SECONDS}
+      MOCK_LLM:                ${MOCK_LLM}
+      LOG_LEVEL:               ${LOG_LEVEL}
+      CORS_ORIGINS:            ${CORS_ORIGINS}
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+    container_name: proyecto-propiedades-frontend
+    depends_on:
+      - backend
+    ports:
+      - "8080:8080"

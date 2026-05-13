@@ -1,0 +1,450 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "proyecto-propiedades API",
+    "description": "Búsqueda de propiedades inmobiliarias en lenguaje natural. Endpoint `POST /api/search` traduce NL a SQL vía LLM local (Ollama), valida con sqlglot AST y ejecuta sobre MySQL.",
+    "contact": {
+      "name": "Braian Staimer",
+      "url": "https://github.com/braianstaimer"
+    },
+    "license": {
+      "name": "MIT"
+    },
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/search": {
+      "post": {
+        "tags": [
+          "search"
+        ],
+        "summary": "Buscar propiedades en lenguaje natural",
+        "description": "Recibe una consulta en español natural y devuelve propiedades coincidentes. Internamente: sanitiza el input, lo envía al LLM local para generar SQL, valida con sqlglot AST + whitelist (sólo SELECT sobre `propiedades`), y ejecuta el SQL validado contra MySQL.",
+        "operationId": "searchProperties",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Query vacía, larga o con caracteres no permitidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "El LLM falló o el SQL generado no pasó validación.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit excedido (si habilitado).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error en MySQL.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "LLM (Ollama) no disponible.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/health": {
+      "get": {
+        "tags": [
+          "search",
+          "health"
+        ],
+        "summary": "Estado del backend, DB y LLM",
+        "description": "Devuelve `ok` si DB y LLM responden. Devuelve `degraded` si alguno está caído. Útil para sondas de liveness/readiness y para diagnóstico desde el frontend.",
+        "operationId": "getHealth",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ErrorDetail": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "Código de error del catálogo (SCREAMING_SNAKE_CASE)."
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Mensaje humano en español."
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail",
+            "description": "Detalle técnico opcional."
+          },
+          "request_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Id",
+            "description": "ID de correlación de la request."
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ErrorDetail"
+      },
+      "ErrorResponse": {
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorDetail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "title": "ErrorResponse",
+        "example": {
+          "error": {
+            "code": "LLM_TIMEOUT",
+            "message": "El modelo tardó más del tiempo permitido. Intente de nuevo.",
+            "request_id": "01H8X..."
+          }
+        }
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "degraded"
+            ],
+            "title": "Status",
+            "description": "Estado global.",
+            "default": "ok"
+          },
+          "db": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "down"
+            ],
+            "title": "Db",
+            "description": "Estado MySQL."
+          },
+          "llm": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "down"
+            ],
+            "title": "Llm",
+            "description": "Estado LLM."
+          },
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "description": "Versión del backend."
+          }
+        },
+        "type": "object",
+        "required": [
+          "db",
+          "llm",
+          "version"
+        ],
+        "title": "HealthResponse",
+        "example": {
+          "db": "ok",
+          "llm": "ok",
+          "status": "ok",
+          "version": "0.1.0"
+        }
+      },
+      "PropertyOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id",
+            "description": "Identificador único de la propiedad."
+          },
+          "titulo": {
+            "type": "string",
+            "title": "Titulo",
+            "description": "Título descriptivo (máx 180 chars)."
+          },
+          "descripcion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Descripcion",
+            "description": "Descripción larga opcional."
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "casa",
+              "departamento",
+              "terreno",
+              "oficina",
+              "local"
+            ],
+            "title": "Tipo",
+            "description": "Categoría de propiedad."
+          },
+          "precio": {
+            "type": "number",
+            "minimum": 0,
+            "title": "Precio",
+            "description": "Precio en USD."
+          },
+          "habitaciones": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Habitaciones",
+            "description": "# de habitaciones."
+          },
+          "banos": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Banos",
+            "description": "# de baños."
+          },
+          "area_m2": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area M2",
+            "description": "Área en m²."
+          },
+          "ubicacion": {
+            "type": "string",
+            "title": "Ubicacion",
+            "description": "Zona/ubicación (texto libre)."
+          },
+          "fecha_publicacion": {
+            "type": "string",
+            "format": "date",
+            "title": "Fecha Publicacion",
+            "description": "Fecha en que se publicó la propiedad."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "titulo",
+          "tipo",
+          "precio",
+          "ubicacion",
+          "fecha_publicacion"
+        ],
+        "title": "PropertyOut",
+        "example": {
+          "area_m2": 240,
+          "banos": 3,
+          "descripcion": "Acabados de lujo, jardín y parqueo doble.",
+          "fecha_publicacion": "2026-04-21",
+          "habitaciones": 3,
+          "id": 1,
+          "precio": 320000,
+          "tipo": "casa",
+          "titulo": "Casa moderna en Zona 10",
+          "ubicacion": "Zona 10, Guatemala"
+        }
+      },
+      "SearchRequest": {
+        "properties": {
+          "query": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Query",
+            "description": "Consulta en lenguaje natural (1–500 caracteres).",
+            "examples": [
+              "Busco casas de 3 habitaciones en zona 10"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "query"
+        ],
+        "title": "SearchRequest",
+        "example": {
+          "query": "Busco casas de 3 habitaciones en zona 10"
+        }
+      },
+      "SearchResponse": {
+        "properties": {
+          "query": {
+            "type": "string",
+            "title": "Query",
+            "description": "Consulta NL recibida (saneada)."
+          },
+          "sql": {
+            "type": "string",
+            "title": "Sql",
+            "description": "SQL ejecutado tras validación."
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 0,
+            "title": "Count",
+            "description": "Número de resultados retornados."
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/PropertyOut"
+            },
+            "type": "array",
+            "title": "Results",
+            "description": "Lista de propiedades coincidentes."
+          },
+          "took_ms": {
+            "type": "integer",
+            "minimum": 0,
+            "title": "Took Ms",
+            "description": "Tiempo de procesamiento en ms."
+          }
+        },
+        "type": "object",
+        "required": [
+          "query",
+          "sql",
+          "count",
+          "results",
+          "took_ms"
+        ],
+        "title": "SearchResponse",
+        "example": {
+          "count": 2,
+          "query": "Busco casas de 3 habitaciones en zona 10",
+          "results": [
+            {
+              "area_m2": 240,
+              "banos": 3,
+              "descripcion": "Acabados de lujo.",
+              "fecha_publicacion": "2026-04-21",
+              "habitaciones": 3,
+              "id": 1,
+              "precio": 320000,
+              "tipo": "casa",
+              "titulo": "Casa moderna en Zona 10",
+              "ubicacion": "Zona 10, Guatemala"
+            }
+          ],
+          "sql": "SELECT id, titulo, descripcion, tipo, precio, habitaciones, banos, area_m2, ubicacion, fecha_publicacion FROM propiedades WHERE tipo = 'casa' AND habitaciones = 3 AND LOWER(ubicacion) LIKE '%zona 10%' LIMIT 50",
+          "took_ms": 1820
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "search",
+      "description": "Búsqueda NL → SQL → resultados sobre la tabla `propiedades`."
+    },
+    {
+      "name": "health",
+      "description": "Sondeo de estado del backend, MySQL y LLM."
+    }
+  ]
+}

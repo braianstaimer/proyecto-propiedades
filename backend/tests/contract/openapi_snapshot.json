@@ -1,0 +1,23 @@
+{
+  "components_schemas": [
+    "ErrorDetail",
+    "ErrorResponse",
+    "HealthResponse",
+    "PropertyOut",
+    "SearchRequest",
+    "SearchResponse"
+  ],
+  "info": {
+    "title": "proyecto-propiedades API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "operations": [
+    "GET /api/health",
+    "POST /api/search"
+  ],
+  "paths": [
+    "/api/health",
+    "/api/search"
+  ]
+}

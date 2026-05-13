@@ -1,0 +1,43 @@
+[project]
+name = "proyecto-propiedades-backend"
+version = "0.1.0"
+description = "Búsqueda de propiedades inmobiliarias en lenguaje natural — FastAPI + Ollama + MySQL"
+requires-python = ">=3.12"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+extend-exclude = ["venv", ".venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "C4", "SIM"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = false
+warn_unused_ignores = true
+warn_redundant_casts = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
+exclude = ["tests/", "venv/"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "-ra -q"
+
+[tool.coverage.run]
+source = ["app"]
+omit = ["tests/*", "**/__init__.py", "app/models.py"]
+# Nota: app/models.py es un módulo SQLAlchemy declarativo sin lógica.
+# La app accede a `propiedades` vía SQL validado, no via ORM. El módulo se
+# conserva para futura adopción de Alembic.
+
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover",
+  "raise NotImplementedError",
+  "if TYPE_CHECKING:",
+  "if __name__ == .__main__.:",
+]
